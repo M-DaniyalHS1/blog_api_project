@@ -2,7 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException,Query
 from database import engine, sessionlocal
 from sqlalchemy.orm import Session
 import model, schemas
-from auth import create_token,verify_token
+from auth import authenticate_admin,create_token,verify_token
+
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 
 model.base.metadata.create_all(bind=engine)
@@ -85,7 +87,13 @@ def get_blog(id: int, db: Session = Depends(get_db)):
 
 # Update blog api
 @app.put("/blogs/{id}", response_model=schemas.BlogResponse)
-def update_blog(id: int, blog: schemas.BlogCreate, db: Session = Depends(get_db)):
+def update_blog(
+    id: int,
+    blog: schemas.BlogCreate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(verify_token),
+):
+    # Keep your existing update code here.
     existing_blog = db.query(model.Blog).filter(model.Blog.id == id).first()
 
     if not existing_blog:

@@ -8,6 +8,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "passlib[bycrypt]>=1.7.4",
     "psycopg2-binary>=2.9.13",
+    "pwdlib[argon2]>=0.3.1",
     "python-dotenv>=1.2.3",
     "python-jose>=3.5.0",
     "python-multipart>=0.0.32",
