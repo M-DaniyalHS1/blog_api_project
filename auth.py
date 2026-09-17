@@ -12,8 +12,8 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ADMIN_USERNAME = os.getenv("admin_username")
-ADMIN_PASSWORD_HASH = os.getenv("admin_password_hash")
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

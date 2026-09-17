@@ -29,9 +29,15 @@ def get_db():
 
 #login api
 @app.post("/login")
-def login():
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    if not authenticate_admin(form_data.username, form_data.password):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return {
-        "access_token":create_token({"user":"admin"}),
+        "access_token":create_token(form_data.username),
         "token_type":"bearer"
     }
 

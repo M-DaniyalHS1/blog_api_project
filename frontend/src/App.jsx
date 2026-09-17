@@ -410,22 +410,50 @@ function App() {
 
             <form onSubmit={handleCreatePost}>
             {!token && (
-              <div className="status-card">
-                <p>
-                  Use demo login before publishing. This demo does not
-                  check a username or password.
-                </p>
+                <div className="status-card">
+                  <p>Log in to publish a post.</p>
 
-                <button
-                  type="button"
-                  className="publish-button"
-                  onClick={handleLogin}
-                  disabled={loggingIn}
-                >
-                  {loggingIn ? "Logging in..." : "Demo login"}
-                </button>
-              </div>
-            )}
+                  <label htmlFor="login-username">Username</label>
+                  <input
+                    id="login-username"
+                    type="text"
+                    autoComplete="username"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    disabled={loggingIn}
+                  />
+
+                  <label htmlFor="login-password">Password</label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    disabled={loggingIn}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+
+                        if (!loggingIn) {
+                          handleLogin();
+                        }
+                      }
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    className="publish-button"
+                    onClick={handleLogin}
+                    disabled={loggingIn}
+                  >
+                    {loggingIn ? "Logging in..." : "Log in"}
+                  </button>
+                </div>
+              )}
 
             {token && (
               <div className="status-card">
