@@ -53,7 +53,9 @@ def home():
 def create_blog(blog: schemas.BlogCreate, db: Session = Depends(get_db), user = Depends(verify_token)):
     new_blog = model.Blog(
         title=blog.title,
-        content=blog.content
+        content=blog.content,
+        image_url=blog.image_url,
+        source_url=blog.source_url
     )
     db.add(new_blog)
     db.commit()
@@ -70,6 +72,7 @@ def get_table(page:int = 1,
     query = db.query(model.Blog)
     if search:
         query = query.filter(model.Blog.title.ilike(f"%{search}%"))
+    query = query.order_by(model.Blog.id.desc())
     total = query.count()
     start = (page -1) * limit
     blogs = query.offset(start).limit(limit).all()
@@ -107,7 +110,12 @@ def update_blog(
     
     existing_blog.title = blog.title
     existing_blog.content = blog.content
+    if "image_url" in blog.model_fields_set:
+        existing_blog.image_url = blog.image_url
     
+    if "source_url" in blog.model_fields_set:
+        existing_blog.source_url = blog.source_url
+
     db.commit()
     db.refresh(existing_blog)  # Fixed: passed existing_blog here
     return existing_blog

@@ -1,6 +1,7 @@
+import ArticlePage from "./ArticlePage.jsx";
 import { useEffect, useState } from "react";
 
-const API_BASE_URL = "https://blog-api-ecef21cc.fastapicloud.dev";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://blog-api-ecef21cc.fastapicloud.dev";
 const API_URL = `${API_BASE_URL}/blogs`;
 
 async function getErrorMessage(response, fallback) {
@@ -17,7 +18,32 @@ async function getErrorMessage(response, fallback) {
   return fallback;
 }
 
-function App() {
+function BlogImage({ url, preview = false }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return <span>{preview ? "Image could not load. Check that the URL links directly to a public image." : "Dani Blogs"}</span>;
+  }
+  return (
+    <img
+      src={url}
+      alt={preview ? "Post image preview" : ""}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function validImageUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function HomeApp() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,6 +52,8 @@ function App() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -35,7 +63,9 @@ function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleLogin() {
+  async function handleLogin(event) {
+  event.preventDefault();
+  if (loggingIn) return;
   if (!username.trim() || !password) {
     setCreateError("Enter your username and password.");
     return;
@@ -57,6 +87,9 @@ function App() {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Wrong username or password.");
+      }
       throw new Error(
         await getErrorMessage(
           response,
@@ -96,6 +129,16 @@ function App() {
       return;
     }
 
+    if (imageUrl.trim() && !validImageUrl(imageUrl.trim())) {
+      setCreateError("Enter a valid image URL starting with https:// or http://.");
+      return;
+    }
+
+    if (sourceUrl.trim() && !validImageUrl(sourceUrl.trim())) {
+      setCreateError("Enter a source URL starting with https:// or http://.");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setCreateError("");
@@ -109,6 +152,8 @@ function App() {
         body: JSON.stringify({
           title,
           content,
+          image_url: imageUrl.trim() || null,
+          source_url: sourceUrl.trim() || null,
         }),
       });
 
@@ -133,6 +178,8 @@ function App() {
 
       setTitle("");
       setContent("");
+      setImageUrl("");
+      setSourceUrl("");
       setShowCreateForm(false);
     } catch (error) {
       setCreateError(error.message);
@@ -175,21 +222,26 @@ function App() {
     );
   });
 
+
   return (
-    <div className="app">
+    <div className="app" id="home">
       {/* NAVBAR */}
       <nav className="navbar">
-        <div className="logo">
-          <span className="logo-icon">◫</span>
-          <span>My Blog</span>
+      <div className="logo">
+          <img
+            className="logo-image"
+            src="/pics/logo.png"
+            alt="Dani Blogs logo"
+          />
+          <span>Dani Blogs</span>
         </div>
 
         <div className="nav-links">
-          <a className="active" href="#">
+          <a className="active" href="#home">
             Home
           </a>
           <a href="#posts">Posts</a>
-          <a href="#">About</a>
+          <a href="#about">About</a>
         </div>
 
         <div className="nav-actions">
@@ -212,53 +264,26 @@ function App() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-content">
-          <div className="tech-badge">
-            ● Powered by FastAPI + Supabase
-          </div>
-
-          <h1>
-            Ideas. Code. <span>Progress.</span>
-          </h1>
-
-          <p>
-            A space for ideas, experiments, and the journey of building
-            something meaningful with React, FastAPI and Supabase.
-          </p>
-
+          <div className="welcome-badge">Welcome to Dani Blogs</div>
+          <h1>Fresh stories. <span>Different voices.</span></h1>
+          <p>Discover news, ideas, and perspectives from a growing community. Explore what’s happening and find stories worth reading.</p>
           <div className="hero-buttons">
-            <a href="#posts" className="primary-button">
-              Read latest posts →
-            </a>
-
-            <button className="secondary-button">Learn more</button>
+            <a href="#posts" className="primary-button">Explore posts &rarr;</a>
+            <a href="#about" className="secondary-button">About Dani Blogs</a>
           </div>
         </div>
-
-        <div className="hero-visual">
-          <div className="code-window">
-            <div className="window-buttons">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-
-            <pre>
-              {`> Build
-> Share
-> Grow
-> Repeat_`}
-            </pre>
-          </div>
-
-          <div className="floating-card fastapi">
-            FastAPI
-            <small>Backend API</small>
-          </div>
-
-          <div className="floating-card supabase">
-            Supabase
-            <small>PostgreSQL</small>
-          </div>
+        <div className="hero-collage">
+          <img
+            className="collage-art"
+            src="/pics/community-collage.png"
+            alt="A collage of a city at sunset, a newspaper reader, and friends gathering in a park"
+            width="1280"
+            height="1280"
+            fetchPriority="high"
+          />
+          <span className="collage-topic collage-topic-news">News</span>
+          <span className="collage-topic collage-topic-culture">Culture</span>
+          <span className="collage-topic collage-topic-life">Life</span>
         </div>
       </section>
 
@@ -275,13 +300,6 @@ function App() {
           />
         </div>
 
-        <div className="categories">
-          <button className="selected">All</button>
-          <button>Tech</button>
-          <button>Updates</button>
-          <button>Thoughts</button>
-          <button>Life</button>
-        </div>
       </section>
 
       {/* CONTENT */}
@@ -316,21 +334,21 @@ function App() {
 
           <div className="posts-list">
             {filteredBlogs.map((blog) => (
-              <article className="post-card" key={blog.id}>
+              <article className="post-card" id={`post-${blog.id}`} key={blog.id}>
                 <div className="post-thumbnail">
-                  <span>&lt;/&gt;</span>
+                  <BlogImage key={blog.image_url || "placeholder"} url={blog.image_url} />
                 </div>
 
                 <div className="post-content">
-                  <span className="post-category">DEVELOPMENT</span>
+                  <span className="post-category">BLOG POST</span>
 
-                  <h3>{blog.title}</h3>
-                  <p>{blog.content}</p>
+                  <h3><a href={`#/posts/${blog.id}`}>{blog.title}</a></h3>
+                  <p className="post-excerpt">{blog.content.length > 220 ? `${blog.content.slice(0, 220)}…` : blog.content}</p>
 
                   <div className="post-meta">
                     <span>Post #{blog.id}</span>
                     <span>•</span>
-                    <span>FastAPI Blog</span>
+                    <span>Dani Blogs</span>
                   </div>
                 </div>
 
@@ -343,27 +361,10 @@ function App() {
         {/* SIDEBAR */}
         <aside className="sidebar">
           <div className="sidebar-card">
-            <div className="sidebar-icon">✉</div>
-
-            <h3>Stay in the loop</h3>
-            <p>Get new posts delivered to your inbox.</p>
-
-            <input type="email" placeholder="Your email address" />
-            <button>Subscribe</button>
-
-            <small>No spam. Unsubscribe anytime.</small>
-          </div>
-
-          <div className="sidebar-card">
-            <h3>Popular Topics</h3>
-
-            <div className="topic-list">
-              <span>Development</span>
-              <span>FastAPI</span>
-              <span>Supabase</span>
-              <span>Python</span>
-              <span>Ideas</span>
-            </div>
+            <img className="about-portrait" src="/pics/logo.png" alt="Dani Blogs logo" />
+            <h3>News, ideas, and perspectives</h3>
+            <p>Explore stories, follow new ideas, and discover different views on the world around you.</p>
+            <a className="read-link" href="#about">About Dani Blogs &rarr;</a>
           </div>
 
           <div className="quote-card">
@@ -373,30 +374,40 @@ function App() {
         </aside>
       </main>
 
+      <section className="about-section" id="about" aria-labelledby="about-title">
+        <img className="about-portrait" src="/pics/logo.png" alt="Dani Blogs logo" />
+        <div>
+          <span className="section-label">ABOUT THE PROJECT</span>
+          <h2 id="about-title">About Dani Blogs</h2>
+          <p>Dani Blogs brings news, ideas, and different perspectives together in one place. We’re building a community around stories worth reading and sharing, with space for a variety of topics and voices.</p>
+          <a className="read-link" href="#posts">Find something to read &rarr;</a>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer>
         <div>
-          <strong>My Blog</strong>
-          <p>Thoughts, ideas and updates.</p>
+          <strong>Dani Blogs</strong>
+          <p>News, ideas, and perspectives.</p>
         </div>
 
         <div className="footer-links">
-          <a href="#">Home</a>
+          <a href="#home">Home</a>
           <a href="#posts">Posts</a>
-          <a href="#">About</a>
+          <a href="#about">About</a>
         </div>
 
-        <p>Built with React, FastAPI & Supabase</p>
+        <p>Fresh stories. Different voices.</p>
       </footer>
 
       {/* CREATE POST MODAL */}
       {showCreateForm && (
         <div className="modal-overlay">
-          <div className="create-modal">
+          <div className={`create-modal${token ? "" : " login-modal"}`} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className="modal-header">
               <div>
-                <span className="section-label">CREATE</span>
-                <h2>New Post</h2>
+                <span className="section-label">{token ? "CREATE" : "ADMIN ACCESS"}</span>
+                <h2 id="modal-title">{token ? "New Post" : "Log in"}</h2>
               </div>
 
               <button
@@ -408,10 +419,10 @@ function App() {
               </button>
             </div>
 
-            <form onSubmit={handleCreatePost}>
+            <form onSubmit={token ? handleCreatePost : handleLogin}>
             {!token && (
-                <div className="status-card">
-                  <p>Log in to publish a post.</p>
+                <div className="login-fields">
+                  <p className="login-description">Log in to write and publish your next post.</p>
 
                   <label htmlFor="login-username">Username</label>
                   <input
@@ -433,21 +444,15 @@ function App() {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     disabled={loggingIn}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-
-                        if (!loggingIn) {
-                          handleLogin();
-                        }
-                      }
-                    }}
                   />
 
+                  {createError && (
+                    <p className="create-error" role="alert">{createError}</p>
+                  )}
+
                   <button
-                    type="button"
-                    className="publish-button"
-                    onClick={handleLogin}
+                    type="submit"
+                    className="publish-button login-submit"
                     disabled={loggingIn}
                   >
                     {loggingIn ? "Logging in..." : "Log in"}
@@ -456,7 +461,7 @@ function App() {
               )}
 
             {token && (
-              <div className="status-card">
+              <div className="session-bar">
                 <p>You are logged in.</p>
 
                 <button
@@ -474,6 +479,8 @@ function App() {
               </div>
             )}
 
+              {token && (
+                <>
               <label htmlFor="post-title">Title</label>
               <input
                 id="post-title"
@@ -483,13 +490,32 @@ function App() {
                 onChange={(event) => setTitle(event.target.value)}
               />
 
+              <label htmlFor="post-image">Picture URL <span className="optional-label">(optional)</span></label>
+              <input
+                id="post-image"
+                type="url"
+                placeholder="https://example.com/photo.jpg"
+                value={imageUrl}
+                onChange={(event) => setImageUrl(event.target.value)}
+                aria-describedby="image-help"
+              />
+              <p id="image-help" className="image-help">Paste a direct link to a public image. HTTPS works best.</p>
+              {validImageUrl(imageUrl.trim()) && (
+                <div className="image-preview">
+                  <BlogImage key={imageUrl.trim()} url={imageUrl.trim()} preview />
+                </div>
+              )}
+
+              <label htmlFor="post-source">Source link <span className="optional-label">(optional)</span></label>
+              <input id="post-source" type="url" placeholder="https://example.com/original-story" value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} />
+
               <label htmlFor="post-content">Content</label>
               <textarea
                 id="post-content"
                 placeholder="Write your post..."
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                rows="7"
+                rows="5"
               />
 
               {createError && (
@@ -515,11 +541,33 @@ function App() {
                   {submitting ? "Publishing..." : "Publish Post"}
                 </button>
               </div>
+                </>
+              )}
             </form>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function App() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const updateRoute = () => {
+      setHash(window.location.hash);
+      if (window.location.hash.startsWith("#/posts/")) window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", updateRoute);
+    return () => window.removeEventListener("hashchange", updateRoute);
+  }, []);
+  const match = hash.match(/^#\/posts\/([1-9]\d*)$/);
+  const isArticle = hash.startsWith("#/");
+  return (
+    <>
+      <div hidden={isArticle}><HomeApp /></div>
+      {isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} />}
+    </>
   );
 }
 
