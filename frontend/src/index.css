@@ -1200,3 +1200,17 @@ footer p {
 .article-body p { margin-bottom: 1.4em; }
 .article-body p:first-child { font-weight: 600; color: #edf0f8; }
 .create-modal .summary-input { min-height: 86px; }
+
+/* User account controls */
+.account-actions { display: flex; gap: 12px; align-items: center; }
+.account-link, .auth-switch { border: 0; background: none; color: #c4b7ff; font: inherit; cursor: pointer; }
+.account-link { font-size: 14px; white-space: nowrap; }
+.account-name { color: #b7c0d1; font-size: 13px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.auth-switch { margin-top: 18px; font-size: 14px; }
+.account-link:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 1250px) { .nav-actions > input { display: none; } .navbar { gap: 24px; } }
+@media (max-width: 720px) {
+  .navbar { height: auto; min-height: 72px; padding-top: 12px; padding-bottom: 12px; flex-wrap: wrap; }
+  .nav-actions { width: 100%; justify-content: space-between; margin-left: 0; }
+  .account-name { max-width: 140px; }
+}

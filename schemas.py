@@ -2,6 +2,25 @@ from datetime import datetime
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 
+class UserPublic(BaseModel):
+    id: int
+    username: str
+
+    model_config = {"from_attributes": True}
+
+
+class UserRegister(BaseModel):
+    username: str = Field(min_length=3, max_length=32, pattern=r"^[a-z0-9_]+$")
+    password: str = Field(min_length=8, max_length=128)
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("username", mode="before")
+    @classmethod
+    def normalize_username(cls, value):
+        return value.strip().lower() if isinstance(value, str) else value
+
+
 #input schema
 class BlogCreate(BaseModel):
     title :str 
@@ -27,6 +46,9 @@ class BlogResponse(BaseModel):
 
     source_url: str | None = None
     published_at: datetime | None = None
+
+    author_id: int | None = None
+    author: UserPublic | None = None
 
     class Config:
         from_attributes = True

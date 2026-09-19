@@ -1,5 +1,4 @@
 import os
-import secrets
 from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
@@ -32,26 +31,23 @@ password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def authenticate_admin(username: str, password: str) -> bool:
-    # Verify the password even if the username is incorrect.
-    password_valid = password_hash.verify(
-        password,
-        ADMIN_PASSWORD_HASH,
-    )
-
-    username_valid = secrets.compare_digest(
-        username.encode("utf-8"),
-        ADMIN_USERNAME.encode("utf-8"),
-    )
-
-    return username_valid and password_valid
+# Dummy verification avoids skipping the expensive hash check for unknown users.
+DUMMY_PASSWORD_HASH = password_hash.hash("not-a-real-account-password")
 
 
-def create_token(username: str) -> str:
+def verify_password(password: str, encoded: str) -> bool:
+    try:
+        return password_hash.verify(password, encoded)
+    except (ValueError, TypeError):
+        return False
+
+
+def create_token(user_id: int, token_version: int = 0) -> str:
     now = datetime.now(timezone.utc)
 
     payload = {
-        "sub": username,
+        "sub": str(user_id),
+        "ver": token_version,
         "iat": now,
         "exp": now + timedelta(
             minutes=ACCESS_TOKEN_EXPIRE_MINUTES
@@ -85,7 +81,7 @@ def verify_token(
             },
         )
 
-        if payload.get("sub") != ADMIN_USERNAME:
+        if not payload.get("sub", "").isdigit() or type(payload.get("ver")) is not int:
             raise credentials_error
 
         return payload

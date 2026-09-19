@@ -60,9 +60,26 @@ function HomeApp() {
 
   const [token, setToken] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState(0);
+  const [authMode, setAuthMode] = useState("login");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [authOnly, setAuthOnly] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (!token || !sessionExpiresAt) return;
+    const timer = setTimeout(() => {
+      setToken("");
+      setCurrentUser(null);
+      setAuthMode("login");
+      setCreateError("Your session expired. Log in again; your draft is still here.");
+    }, Math.max(0, sessionExpiresAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [token, sessionExpiresAt]);
 
   async function handleLogin(event) {
   event.preventDefault();
@@ -72,10 +89,23 @@ function HomeApp() {
     return;
   }
 
+  if (authMode === "register" && password !== confirmPassword) {
+    setCreateError("Passwords do not match.");
+    return;
+  }
   setLoggingIn(true);
   setCreateError("");
 
   try {
+    if (authMode === "register") {
+      const registered = await fetch(`${API_BASE_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      if (!registered.ok) throw new Error(await getErrorMessage(registered, "Could not create your account. Try again."));
+      setAuthMode("login");
+    }
     const response = await fetch(`${API_BASE_URL}/login`, {
       method: "POST",
       headers: {
@@ -109,13 +139,48 @@ function HomeApp() {
     }
 
     setToken(data.access_token);
+    setCurrentUser(data.user);
+    setSessionExpiresAt(Date.now() + (data.expires_in || 1800) * 1000);
     setPassword("");
+    setConfirmPassword("");
+    if (authOnly) setShowCreateForm(false);
   } catch (error) {
     setCreateError(error.message);
   } finally {
     setLoggingIn(false);
   }
 }
+
+  function openAuth(mode, only = true) {
+    setAuthMode(mode);
+    setAuthOnly(only);
+    setCreateError("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowCreateForm(true);
+  }
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok && response.status !== 401) throw new Error("Logout failed. Please try again.");
+      setToken("");
+      setCurrentUser(null);
+      setPassword("");
+      setConfirmPassword("");
+      setCreateError("");
+      setShowCreateForm(false);
+    } catch {
+      setCreateError("Could not log out. Check your connection and try again.");
+      setShowCreateForm(true);
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   async function handleCreatePost(event) {
     event.preventDefault();
@@ -162,6 +227,8 @@ function HomeApp() {
       if (!response.ok) {
         if (response.status === 401) {
           setToken("");
+          setCurrentUser(null);
+          setAuthMode("login");
 
           throw new Error(
             "Your session expired or is invalid. Log in again; your draft is still here."
@@ -256,9 +323,20 @@ function HomeApp() {
             onChange={(event) => setSearch(event.target.value)}
           />
 
+          {!token ? (
+            <div className="account-actions">
+              <button className="account-link" onClick={() => openAuth("login")}>Log in</button>
+              <button className="account-link" onClick={() => openAuth("register")}>Sign up</button>
+            </div>
+          ) : (
+            <div className="account-actions">
+              <span className="account-name">@{currentUser?.username}</span>
+              <button className="account-link" disabled={loggingOut || submitting} onClick={handleLogout}>{loggingOut ? "Logging out…" : "Log out"}</button>
+            </div>
+          )}
           <button
             className="new-post-button"
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => openAuth("login", false)}
           >
             + New Post
           </button>
@@ -352,7 +430,7 @@ function HomeApp() {
                   <div className="post-meta">
                     <span>Post #{blog.id}</span>
                     <span>•</span>
-                    <span>Dani Blogs</span>
+                    <span>{blog.author ? `By ${blog.author.username}` : "Dani Blogs"}</span>
                   </div>
                 </div>
 
@@ -410,8 +488,8 @@ function HomeApp() {
           <div className={`create-modal${token ? "" : " login-modal"}`} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div className="modal-header">
               <div>
-                <span className="section-label">{token ? "CREATE" : "ADMIN ACCESS"}</span>
-                <h2 id="modal-title">{token ? "New Post" : "Log in"}</h2>
+                <span className="section-label">{token ? "CREATE" : "JOIN THE CONVERSATION"}</span>
+                <h2 id="modal-title">{token ? "New Post" : authMode === "register" ? "Create an account" : "Welcome back"}</h2>
               </div>
 
               <button
@@ -426,13 +504,18 @@ function HomeApp() {
             <form onSubmit={token ? handleCreatePost : handleLogin}>
             {!token && (
                 <div className="login-fields">
-                  <p className="login-description">Log in to write and publish your next post.</p>
+                  <p className="login-description">{authMode === "register" ? "Choose a username and password to start sharing your stories." : "Log in to write and publish your next post."}</p>
 
                   <label htmlFor="login-username">Username</label>
                   <input
                     id="login-username"
                     type="text"
                     autoComplete="username"
+                    required
+                    minLength={authMode === "register" ? 3 : undefined}
+                    maxLength={authMode === "register" ? 32 : undefined}
+                    pattern={authMode === "register" ? "[A-Za-z0-9_]+" : undefined}
+                    title="Use letters, numbers, and underscores"
                     placeholder="Enter your username"
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
@@ -443,13 +526,23 @@ function HomeApp() {
                   <input
                     id="login-password"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete={authMode === "register" ? "new-password" : "current-password"}
+                    required
+                    minLength={authMode === "register" ? 8 : undefined}
+                    maxLength={128}
                     placeholder="Enter your password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     disabled={loggingIn}
                   />
 
+                  {authMode === "register" && (
+                    <>
+                      <p className="image-help">Username: 3–32 letters, numbers, or underscores. Password: 8–128 characters.</p>
+                      <label htmlFor="confirm-password">Confirm password</label>
+                      <input id="confirm-password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={loggingIn} />
+                    </>
+                  )}
                   {createError && (
                     <p className="create-error" role="alert">{createError}</p>
                   )}
@@ -459,24 +552,23 @@ function HomeApp() {
                     className="publish-button login-submit"
                     disabled={loggingIn}
                   >
-                    {loggingIn ? "Logging in..." : "Log in"}
+                    {loggingIn ? "Please wait…" : authMode === "register" ? "Create account" : "Log in"}
+                  </button>
+                  <button type="button" className="auth-switch" disabled={loggingIn} onClick={() => { setAuthMode(authMode === "login" ? "register" : "login"); setCreateError(""); setPassword(""); setConfirmPassword(""); }}>
+                    {authMode === "login" ? "New here? Create an account" : "Already have an account? Log in"}
                   </button>
                 </div>
               )}
 
             {token && (
               <div className="session-bar">
-                <p>You are logged in.</p>
+                <p>Logged in as <strong>{currentUser?.username}</strong></p>
 
                 <button
                   type="button"
                   className="cancel-button"
-                  disabled={submitting}
-                  onClick={() => {
-                    setToken("");
-                    setPassword("");
-                    setCreateError("");
-                  }}
+                  disabled={submitting || loggingOut}
+                  onClick={handleLogout}
                 >
                   Log out
                 </button>

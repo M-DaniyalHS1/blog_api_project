@@ -27,7 +27,13 @@ class ArticleTests(unittest.TestCase):
                 yield connection
 
         main.app.dependency_overrides[main.get_db] = db
-        main.app.dependency_overrides[main.verify_token] = lambda: {"sub": "test-admin"}
+        with session() as connection:
+            author = model.User(username="test-admin", password_hash="unused-in-tests", is_admin=True)
+            connection.add(author)
+            connection.commit()
+            connection.refresh(author)
+            connection.expunge(author)
+        main.app.dependency_overrides[main.current_user] = lambda: author
         self.client = TestClient(main.app)
 
     def tearDown(self):

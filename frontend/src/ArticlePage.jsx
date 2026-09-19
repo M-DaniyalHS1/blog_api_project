@@ -58,6 +58,7 @@ export default function ArticlePage({ id, apiUrl }) {
             <header className="article-header">
               <span className="section-label">DANI BLOGS</span>
               <h1>{post.title}</h1>
+              {post.author && <p className="article-date">By {post.author.username}</p>}
               {post.summary?.trim() && <p className="article-summary">{post.summary}</p>}
               {validDate ? <time dateTime={post.published_at}>{date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</time> : <p className="article-date">Publication date unavailable</p>}
             </header>
