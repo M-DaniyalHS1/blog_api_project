@@ -52,6 +52,7 @@ function HomeApp() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [summary, setSummary] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -152,6 +153,7 @@ function HomeApp() {
         body: JSON.stringify({
           title,
           content,
+          summary: summary.trim() || null,
           image_url: imageUrl.trim() || null,
           source_url: sourceUrl.trim() || null,
         }),
@@ -178,6 +180,7 @@ function HomeApp() {
 
       setTitle("");
       setContent("");
+      setSummary("");
       setImageUrl("");
       setSourceUrl("");
       setShowCreateForm(false);
@@ -218,7 +221,8 @@ function HomeApp() {
 
     return (
       blog.title.toLowerCase().includes(searchText) ||
-      blog.content.toLowerCase().includes(searchText)
+      blog.content.toLowerCase().includes(searchText) ||
+      (blog.summary || "").toLowerCase().includes(searchText)
     );
   });
 
@@ -343,7 +347,7 @@ function HomeApp() {
                   <span className="post-category">BLOG POST</span>
 
                   <h3><a href={`#/posts/${blog.id}`}>{blog.title}</a></h3>
-                  <p className="post-excerpt">{blog.content.length > 220 ? `${blog.content.slice(0, 220)}…` : blog.content}</p>
+                  <p className="post-excerpt">{blog.summary?.trim() || (blog.content.length > 220 ? `${blog.content.slice(0, 220)}…` : blog.content)}</p>
 
                   <div className="post-meta">
                     <span>Post #{blog.id}</span>
@@ -509,13 +513,17 @@ function HomeApp() {
               <label htmlFor="post-source">Source link <span className="optional-label">(optional)</span></label>
               <input id="post-source" type="url" placeholder="https://example.com/original-story" value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} />
 
-              <label htmlFor="post-content">Content</label>
+              <label htmlFor="post-summary">Short summary <span className="optional-label">(optional)</span></label>
+              <textarea id="post-summary" className="summary-input" rows="3" maxLength={500} placeholder="A short introduction for the homepage card" value={summary} onChange={(event) => setSummary(event.target.value)} aria-describedby="summary-help" />
+              <p id="summary-help" className="image-help">Up to 500 characters. If empty, the homepage uses the beginning of your article.</p>
+
+              <label htmlFor="post-content">Full article</label>
               <textarea
                 id="post-content"
-                placeholder="Write your post..."
+                placeholder="Write the complete article here. Separate paragraphs with a blank line."
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                rows="5"
+                rows="10"
               />
 
               {createError && (

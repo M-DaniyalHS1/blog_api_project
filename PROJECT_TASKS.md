@@ -5,22 +5,24 @@ Work through these phases in order. Mark a task `[x]` only after its behavior ha
 For each phase: agree on behavior, implement, test locally, apply any required database changes, deploy, and verify. Record verification evidence and the completion date below the phase before checking it off. Keep unfinished or blocked items unchecked.
 
 ## 1. Individual post pages
-- [ ] Phase complete and verified
-- [ ] Give each post a shareable URL and full article page.
-- [ ] Display its picture, publication date, and optional source link.
-- [ ] Show short previews on homepage cards that link to the full article.
-- [ ] Handle loading, missing posts, and request errors.
-- [ ] Verify direct links, browser refresh, and mobile reading.
+- [x] Phase complete and verified
+- [x] Give each post a shareable URL and full article page.
+- [x] Display its picture, publication date, and optional source link.
+- [x] Show short previews on homepage cards that link to the full article.
+- [x] Handle loading, missing posts, and request errors.
+- [x] Verify direct links, browser refresh, and mobile reading.
 
-Verification / completion date: In progress; not marked done.
+Verification: Complete. User confirmed “task one is working” after choosing to deploy manually.
 
-- Implemented article routes (`/#/posts/<id>`), full article reading, homepage excerpts and links, source-link input, and loading/error states.
-- Backend integration tests passed (3 tests): create/read/update round trip, date preservation, missing post, unsafe source URL rejection, optional source, and newest-first feed.
 - Frontend lint and production build passed.
-- Migration `migrations/002_article_details.sql` applied and verified against the configured database. Existing publication dates remain unknown; future inserts get a timestamp.
-- Cloud deployment did not run successfully: the sandbox connection failed and the elevated retry was declined.
-- Browser automation could not initialize. Direct-link refresh, browser history, mobile layout, and live end-to-end behavior still need manual verification.
-- Next: deploy from the backend folder with `uv run fastapi deploy`, refresh the frontend, and complete the checks in `TASK1_VERIFICATION.md` before checking off this phase.
+- Three isolated API integration tests passed.
+- Article metadata migration was applied and verified.
+- Final working-behavior confirmation came from the user; automated browser verification was unavailable.
+
+### Task 1 refinement: homepage summary and full article
+- [ ] User verifies the refinement after manual deployment.
+
+Implemented separate optional summary and full-article fields, paragraph layout on article pages, and fallback excerpts for existing posts. Four API tests, frontend lint, and production build passed. Migration 003 applied and verified. User will deploy manually. Existing posts with only a short paragraph require full article text to be added; source links do not import article text.
 
 ## 2. User accounts
 - [ ] Phase complete and verified
@@ -113,4 +115,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 1: Individual post pages.
+Step 2: User accounts. Not started.

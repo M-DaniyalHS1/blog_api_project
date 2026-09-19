@@ -1195,3 +1195,8 @@ footer p {
   .article-page { padding: 28px 20px 56px; }
   .article-body { font-size: 17px; }
 }
+
+.article-summary { color: #b8c3d9; font-size: 20px; line-height: 1.65; margin-bottom: 20px; overflow-wrap: anywhere; }
+.article-body p { margin-bottom: 1.4em; }
+.article-body p:first-child { font-weight: 600; color: #edf0f8; }
+.create-modal .summary-input { min-height: 86px; }

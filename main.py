@@ -54,6 +54,7 @@ def create_blog(blog: schemas.BlogCreate, db: Session = Depends(get_db), user = 
     new_blog = model.Blog(
         title=blog.title,
         content=blog.content,
+        summary=blog.summary,
         image_url=blog.image_url,
         source_url=blog.source_url
     )
@@ -110,6 +111,8 @@ def update_blog(
     
     existing_blog.title = blog.title
     existing_blog.content = blog.content
+    if "summary" in blog.model_fields_set:
+        existing_blog.summary = blog.summary
     if "image_url" in blog.model_fields_set:
         existing_blog.image_url = blog.image_url
     

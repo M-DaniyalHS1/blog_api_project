@@ -1,4 +1,6 @@
-# Task 1: Remaining verification
+# Task 1: Verification record
+
+Status: Complete based on the user’s confirmation that Task 1 is working after manual deployment. The checks below are retained as a regression checklist; they were not individually observed through browser automation.
 
 The database migration has already been applied. The local code passes lint, production build, and three isolated API integration tests.
 
@@ -17,4 +19,4 @@ The database migration has already been applied. The local code passes lint, pro
 - With browser networking offline, reload an article. Confirm an error appears; reconnect and choose Try again.
 - Check at a narrow mobile viewport: no horizontal overflow, readable paragraphs, fitting images and accessible navigation.
 
-After these pass and the deployed API is verified, update the Task 1 checkboxes in PROJECT_TASKS.md and record the verification date. Task 2 remains unstarted.
+Task 1 is marked complete in PROJECT_TASKS.md based on user confirmation. Task 2 remains unstarted.

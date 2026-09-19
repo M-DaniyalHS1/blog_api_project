@@ -58,10 +58,11 @@ export default function ArticlePage({ id, apiUrl }) {
             <header className="article-header">
               <span className="section-label">DANI BLOGS</span>
               <h1>{post.title}</h1>
+              {post.summary?.trim() && <p className="article-summary">{post.summary}</p>}
               {validDate ? <time dateTime={post.published_at}>{date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</time> : <p className="article-date">Publication date unavailable</p>}
             </header>
             {post.image_url && (imageFailed ? <p className="article-date">Article image unavailable.</p> : <img className="article-image" src={post.image_url} alt={`Image for ${post.title}`} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} />)}
-            <div className="article-body">{post.content}</div>
+            <div className="article-body">{post.content.split(/\r?\n\s*\r?\n/).filter((paragraph) => paragraph.trim()).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
             {source && <div className="article-source"><span className="section-label">SOURCE</span><a href={source} target="_blank" rel="noopener noreferrer">Read the original source ↗</a></div>}
           </article>
         )}

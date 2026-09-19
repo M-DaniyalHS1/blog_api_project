@@ -46,6 +46,18 @@ class ArticleTests(unittest.TestCase):
         self.assertEqual(edited["published_at"], data["published_at"])
         self.assertEqual(edited["source_url"], data["source_url"])
 
+    def test_summary_and_full_article_are_separate(self):
+        body = "First detailed paragraph.\n\n" + "More article content. " * 100
+        result = self.client.post("/blogs", json={"title": "News", "summary": "Short homepage introduction.", "content": body})
+        self.assertEqual(result.status_code, 200)
+        post = result.json()
+        self.assertEqual(post["summary"], "Short homepage introduction.")
+        self.assertEqual(self.client.get(f"/blogs/{post['id']}").json()["content"], body)
+        edited = self.client.put(f"/blogs/{post['id']}", json={"title": "News updated", "content": body}).json()
+        self.assertEqual(edited["summary"], post["summary"])
+        invalid = self.client.post("/blogs", json={"title": "News", "content": body, "summary": "x" * 501})
+        self.assertEqual(invalid.status_code, 422)
+
     def test_missing_and_unsafe_source(self):
         self.assertEqual(self.client.get("/blogs/999").status_code, 404)
         response = self.client.post("/blogs", json={"title": "Test", "content": "Body", "source_url": "javascript:alert(1)"})

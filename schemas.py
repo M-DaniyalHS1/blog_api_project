@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl, Field, field_validator
 
 #input schema
 class BlogCreate(BaseModel):
     title :str 
     content :str
+    summary: str | None = Field(default=None, max_length=500)
     image_url: str | None = None
 
     source_url: str | None = None
@@ -21,6 +22,7 @@ class BlogResponse(BaseModel):
     id : int
     title : str
     content : str
+    summary: str | None = None
     image_url: str | None = None
 
     source_url: str | None = None

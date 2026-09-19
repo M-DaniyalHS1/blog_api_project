@@ -13,3 +13,4 @@ class Blog(base):
     image_url = Column(Text, nullable=True)
     source_url = Column(Text, nullable=True)
     published_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
+    summary = Column(Text, nullable=True)
