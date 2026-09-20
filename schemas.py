@@ -83,3 +83,23 @@ class BlogResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CommentWrite(BaseModel):
+    content: str = Field(min_length=1, max_length=2000)
+    model_config = {"extra": "forbid"}
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def trim_comment(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class CommentPublic(BaseModel):
+    id: int
+    blog_id: int
+    user_id: int
+    content: str
+    created_at: datetime
+    edited_at: datetime | None = None
+    author: ProfilePublic
+    model_config = {"from_attributes": True}

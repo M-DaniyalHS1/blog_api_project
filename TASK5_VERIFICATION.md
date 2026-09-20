@@ -1,6 +1,6 @@
 # Task 5: Categories, search, and pagination
 
-Status: Implemented; awaiting manual deployment and live verification.
+Status: Complete on 2026-09-20 at the user's explicit request. Checks below are retained for regression testing.
 
 ## Changes
 - Categories: General, News, Technology, Sports, Lifestyle, Opinion, Culture.
@@ -19,4 +19,4 @@ Status: Implemented; awaiting manual deployment and live verification.
 6. Try an unmatched search and Clear filters. Check mobile category controls and pagination.
 7. Confirm saved drafts never appear in search or category results.
 
-Validation: 17 API tests, lint, and production build passed. Live/browser confirmation is pending. Keep Task 5 unchecked until the user verifies it works.
+Validation: 17 API tests, lint, and production build passed. Task 5 is marked complete in PROJECT_TASKS.md at the user’s request. Live browser checks were not independently observed.

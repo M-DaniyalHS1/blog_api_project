@@ -1245,3 +1245,22 @@ footer p {
 .pagination button:disabled { opacity: .4; cursor: not-allowed; }
 .create-modal select { width: 100%; margin-bottom: 16px; padding: 10px 12px; border: 1px solid #303b54; border-radius: 10px; background: #0b1220; color: white; font: inherit; }
 .create-modal select:focus-visible, .category-filters button:focus-visible { outline: 2px solid #a799ff; outline-offset: 3px; }
+
+/* Article discussion */
+.discussion { margin-top: 48px; padding-top: 28px; border-top: 1px solid #303b54; }
+.discussion-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.like-button.is-liked { border-color: #9d80ff; background: #352450; color: #ddceff; }
+.discussion-notice { min-height: 24px; margin: 14px 0; color: #7ee0c6; font-size: 14px; }
+.comment-form label { display: block; margin-bottom: 10px; color: #c5cfdf; }
+.comment-form textarea { width: 100%; padding: 14px; border: 1px solid #303b54; border-radius: 10px; background: #0b1220; color: white; resize: vertical; font: inherit; line-height: 1.6; }
+.comment-form textarea:focus-visible { outline: 2px solid #9e88ff; outline-offset: 2px; }
+.comment-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: #aab4c8; }
+.comment-count { margin: 32px 0 20px; }
+.comment { padding: 22px 0; border-bottom: 1px solid #27324a; }
+.comment-author { display: flex; gap: 12px; align-items: center; }
+.comment-author .profile-avatar { width: 40px; height: 40px; font-size: 20px; margin: 0; }
+.comment-author time { display: block; margin-top: 4px; font-size: 12px; color: #9ba8be; }
+.comment-author a { color: #c6b8ff; overflow-wrap: anywhere; }
+.comment-body { margin-top: 14px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; color: #d3daea; }
+.discussion-empty, .discussion-login { color: #aab4c8; line-height: 1.7; }
+.comment .comment-form { margin-top: 14px; }

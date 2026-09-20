@@ -19,6 +19,8 @@ class Blog(base):
     status = Column(String(16), nullable=False, default="published", server_default="published")
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     author = relationship("User")
+    comments = relationship("Comment", cascade="all, delete-orphan")
+    likes = relationship("Like", cascade="all, delete-orphan")
 
 
 class User(base):
@@ -33,3 +35,20 @@ class User(base):
     display_name = Column(String(80), nullable=True)
     bio = Column(Text, nullable=True)
     avatar_url = Column(Text, nullable=True)
+
+
+class Comment(base):
+    __tablename__ = "comments"
+    id = Column(Integer, primary_key=True)
+    blog_id = Column(Integer, ForeignKey("blogs.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    edited_at = Column(DateTime(timezone=True), nullable=True)
+    author = relationship("User")
+
+
+class Like(base):
+    __tablename__ = "likes"
+    blog_id = Column(Integer, ForeignKey("blogs.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)

@@ -47,7 +47,7 @@ function validImageUrl(value) {
   }
 }
 
-function HomeApp() {
+function HomeApp({ token, setToken, currentUser, setCurrentUser }) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -67,15 +67,14 @@ function HomeApp() {
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  const [token, setToken] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
   const [sessionExpiresAt, setSessionExpiresAt] = useState(0);
   const [authMode, setAuthMode] = useState("login");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [authOnly, setAuthOnly] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [loginReturn, setLoginReturn] = useState("");
   const [managingPosts, setManagingPosts] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingStatus, setEditingStatus] = useState("draft");
@@ -92,7 +91,17 @@ function HomeApp() {
       setCreateError("Your session expired. Log in again; your draft is still here.");
     }, Math.max(0, sessionExpiresAt - Date.now()));
     return () => clearTimeout(timer);
-  }, [token, sessionExpiresAt]);
+  }, [token, sessionExpiresAt, setToken, setCurrentUser]);
+
+  useEffect(() => {
+    const open = event => {
+      setLoginReturn(event.detail || "");
+      setAuthMode("login"); setAuthOnly(true); setCreateError("");
+      setPassword(""); setConfirmPassword(""); setShowCreateForm(true);
+    };
+    window.addEventListener("open-login", open);
+    return () => window.removeEventListener("open-login", open);
+  }, []);
 
   async function handleLogin(event) {
   event.preventDefault();
@@ -156,7 +165,10 @@ function HomeApp() {
     setSessionExpiresAt(Date.now() + (data.expires_in || 1800) * 1000);
     setPassword("");
     setConfirmPassword("");
-    if (authOnly) setShowCreateForm(false);
+    if (authOnly) {
+      setShowCreateForm(false);
+      if (loginReturn) { window.location.hash = loginReturn; setLoginReturn(""); }
+    }
   } catch (error) {
     setCreateError(error.message);
   } finally {
@@ -165,6 +177,7 @@ function HomeApp() {
 }
 
   function openAuth(mode, only = true) {
+    setLoginReturn("");
     setAuthMode(mode);
     setAuthOnly(only);
     setCreateError("");
@@ -725,6 +738,8 @@ function HomeApp() {
 }
 
 function App() {
+  const [token, setToken] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
     const updateRoute = () => {
@@ -739,8 +754,12 @@ function App() {
   const isArticle = hash.startsWith("#/");
   return (
     <>
-      <div hidden={isArticle}><HomeApp /></div>
-      {authorMatch ? <AuthorPage key={hash} id={authorMatch[1]} apiBase={API_BASE_URL} /> : isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} />}
+      <div hidden={isArticle}><HomeApp token={token} setToken={setToken} currentUser={currentUser} setCurrentUser={setCurrentUser} /></div>
+      {authorMatch ? <AuthorPage key={hash} id={authorMatch[1]} apiBase={API_BASE_URL} /> : isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} token={token} user={currentUser} onExpired={() => { setToken(""); setCurrentUser(null); }} onLogin={() => {
+        const returnTo = window.location.hash;
+        window.location.hash = "#home";
+        window.dispatchEvent(new CustomEvent("open-login", { detail: returnTo }));
+      }} />}
     </>
   );
 }

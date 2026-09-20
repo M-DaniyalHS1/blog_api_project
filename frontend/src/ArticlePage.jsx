@@ -1,6 +1,7 @@
+import Discussion from "./Discussion.jsx";
 import { useEffect, useState } from "react";
 
-export default function ArticlePage({ id, apiUrl }) {
+export default function ArticlePage({ id, apiUrl, token, user, onLogin, onExpired }) {
   const [post, setPost] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(Boolean(id));
@@ -65,6 +66,7 @@ export default function ArticlePage({ id, apiUrl }) {
             {post.image_url && (imageFailed ? <p className="article-date">Article image unavailable.</p> : <img className="article-image" src={post.image_url} alt={`Image for ${post.title}`} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} />)}
             <div className="article-body">{post.content.split(/\r?\n\s*\r?\n/).filter((paragraph) => paragraph.trim()).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
             {source && <div className="article-source"><span className="section-label">SOURCE</span><a href={source} target="_blank" rel="noopener noreferrer">Read the original source ↗</a></div>}
+            <Discussion postId={post.id} apiUrl={apiUrl} token={token} user={user} onLogin={onLogin} onExpired={onExpired} />
           </article>
         )}
       </main>

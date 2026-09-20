@@ -66,19 +66,17 @@ Verification / completion date: 2026-09-20. User confirmed Task 4 is working aft
 - Live working-behavior confirmation came from the user; browser checks were not individually observed through automation.
 
 ## 5. Categories, search, and pagination
-- [ ] Phase complete and verified
-- [ ] Assign categories to posts and provide working category filters.
-- [ ] Search all published posts, not just the loaded page.
-- [ ] Add pagination or a load-more control with consistent ordering.
-- [ ] Verify combined filters, empty results, and page boundaries.
+- [x] Phase complete and verified
+- [x] Assign categories to posts and provide working category filters.
+- [x] Search all published posts, not just the loaded page.
+- [x] Add pagination or a load-more control with consistent ordering.
+- [x] Verify combined filters, empty results, and page boundaries.
 
-Verification: Implemented locally; awaiting manual deployment and user verification.
+Verification / completion date: 2026-09-20. Marked complete at the user's explicit request.
 
-- Categories available in the editor and as homepage filters; labels shown on cards and articles.
-- Server-side search covers title, summary, and article body across published posts, combined with category filtering.
-- Six-post pages, total count, Previous/Next controls, filter reset to page one, request cancellation, and empty/error states added.
 - All 17 API tests, frontend lint, and production build passed.
-- Migration 007 applied and verified; existing posts use General. Manual checks in TASK5_VERIFICATION.md.
+- Category migration applied and verified; existing posts preserved.
+- Completion confirmed by the user; live browser checks were not independently observed.
 
 ## 6. Comments and reactions
 - [ ] Phase complete and verified
@@ -133,4 +131,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 5: Categories, search, and pagination. Awaiting manual deployment and user verification.
+Step 6: Comments and reactions. Not started.

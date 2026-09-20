@@ -11,7 +11,7 @@ from sqlalchemy import select, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
@@ -234,3 +234,94 @@ def delete_blog(id: int, db: Session = Depends(get_db),user = Depends(current_us
     return {
         "message": f"blog id = {id} deleted succesfully"
     }
+
+
+optional_oauth = OAuth2PasswordBearer(tokenUrl="login", auto_error=False)
+
+
+def optional_user(token: str | None = Depends(optional_oauth), db: Session = Depends(get_db)):
+    return current_user(verify_token(token), db) if token else None
+
+
+def published_post(db, blog_id):
+    post = db.get(model.Blog, blog_id)
+    if not post or post.status != "published":
+        raise HTTPException(404, "Post not found")
+    return post
+
+
+@app.get("/blogs/{blog_id}/comments")
+def comments(blog_id: int, page: int = Query(1, ge=1), limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
+    published_post(db, blog_id)
+    query = db.query(model.Comment).options(joinedload(model.Comment.author)).filter(model.Comment.blog_id == blog_id).order_by(model.Comment.id.desc())
+    return {"total": query.count(), "page": page, "data": [schemas.CommentPublic.model_validate(comment) for comment in query.offset((page - 1) * limit).limit(limit).all()]}
+
+
+@app.post("/blogs/{blog_id}/comments", response_model=schemas.CommentPublic, status_code=201)
+def add_comment(blog_id: int, body: schemas.CommentWrite, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    published_post(db, blog_id)
+    comment = model.Comment(blog_id=blog_id, user_id=user.id, content=body.content)
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
+def owned_comment(db, blog_id, comment_id, user):
+    published_post(db, blog_id)
+    comment = db.get(model.Comment, comment_id)
+    if not comment or comment.blog_id != blog_id:
+        raise HTTPException(404, "Comment not found")
+    if comment.user_id != user.id:
+        raise HTTPException(403, "You can only change your own comments")
+    return comment
+
+
+@app.put("/blogs/{blog_id}/comments/{comment_id}", response_model=schemas.CommentPublic)
+def edit_comment(blog_id: int, comment_id: int, body: schemas.CommentWrite, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    comment = owned_comment(db, blog_id, comment_id, user)
+    comment.content = body.content
+    comment.edited_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
+@app.delete("/blogs/{blog_id}/comments/{comment_id}", status_code=204)
+def remove_comment(blog_id: int, comment_id: int, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    db.delete(owned_comment(db, blog_id, comment_id, user))
+    db.commit()
+
+
+def reaction_summary(db, blog_id, user):
+    return {"count": db.query(model.Like).filter(model.Like.blog_id == blog_id).count(),
+            "liked": bool(user and db.get(model.Like, (blog_id, user.id)))}
+
+
+@app.get("/blogs/{blog_id}/reactions")
+def reactions(blog_id: int, user: model.User | None = Depends(optional_user), db: Session = Depends(get_db)):
+    published_post(db, blog_id)
+    return reaction_summary(db, blog_id, user)
+
+
+@app.put("/blogs/{blog_id}/like")
+def like_post(blog_id: int, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    published_post(db, blog_id)
+    if not db.get(model.Like, (blog_id, user.id)):
+        db.add(model.Like(blog_id=blog_id, user_id=user.id))
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            published_post(db, blog_id)
+            if not db.get(model.Like, (blog_id, user.id)):
+                raise
+    return reaction_summary(db, blog_id, user)
+
+
+@app.delete("/blogs/{blog_id}/like")
+def unlike_post(blog_id: int, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    published_post(db, blog_id)
+    db.query(model.Like).filter(model.Like.blog_id == blog_id, model.Like.user_id == user.id).delete()
+    db.commit()
+    return reaction_summary(db, blog_id, user)

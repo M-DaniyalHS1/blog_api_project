@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS comments (
+    id SERIAL PRIMARY KEY,
+    blog_id INTEGER NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    edited_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_comments_blog_id ON comments(blog_id);
+CREATE INDEX IF NOT EXISTS ix_comments_user_id ON comments(user_id);
+CREATE TABLE IF NOT EXISTS likes (
+    blog_id INTEGER NOT NULL REFERENCES blogs(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (blog_id, user_id)
+);
