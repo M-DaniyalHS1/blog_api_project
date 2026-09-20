@@ -15,6 +15,7 @@ class Blog(base):
     source_url = Column(Text, nullable=True)
     published_at = Column(DateTime(timezone=True), nullable=True)
     summary = Column(Text, nullable=True)
+    category = Column(String(32), nullable=False, default="General", server_default="General")
     status = Column(String(16), nullable=False, default="published", server_default="published")
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     author = relationship("User")

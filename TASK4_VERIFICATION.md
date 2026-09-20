@@ -1,6 +1,6 @@
 # Task 4: Manage posts and drafts
 
-Status: Implemented and locally tested; awaiting manual deployment and browser verification.
+Status: Complete on 2026-09-20 based on user confirmation after manual deployment. The checks below are retained for regression testing.
 
 ## Ready
 - Migration 006 applied; all six pre-existing posts remain published.
@@ -24,4 +24,4 @@ Run `uv run fastapi deploy` from the backend directory. Wait for successful star
 8. Log in with a different account. My posts must not show the first account's items. API ownership rejection is covered by automated tests.
 9. Check these controls on a mobile viewport. Saved drafts survive refresh; unsaved typing does not. Logout clears unsaved editor state.
 
-Only check off Task 4 after user confirmation. Task 5 remains unstarted.
+Task 4 is marked complete in PROJECT_TASKS.md. Task 5 remains unstarted.

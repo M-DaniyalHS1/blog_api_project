@@ -52,21 +52,18 @@ Verification / completion date: 2026-09-20. Complete based on user confirmation 
 Verification / completion date: 2026-09-20. User confirmed profiles work after manual deployment. All 12 API tests, lint, and build passed.
 
 ## 4. Manage posts and drafts
-- [ ] Phase complete and verified
-- [ ] Allow authors to create, edit, and delete their own posts.
-- [ ] Add draft saving and publishing.
-- [ ] Keep drafts private and excluded from public feeds and search.
-- [ ] Enforce ownership in the backend, not only in the interface.
-- [ ] Verify draft persistence, publishing, editing, and deletion.
+- [x] Phase complete and verified
+- [x] Allow authors to create, edit, and delete their own posts.
+- [x] Add draft saving and publishing.
+- [x] Keep drafts private and excluded from public feeds and search.
+- [x] Enforce ownership in the backend, not only in the interface.
+- [x] Verify draft persistence, publishing, editing, and deletion.
 
-Verification: Implemented; awaiting user verification after manual deployment.
+Verification / completion date: 2026-09-20. User confirmed Task 4 is working after manual deployment.
 
-- My posts lists the user's published posts and private drafts, with edit and confirmed delete actions.
-- Editor supports saving drafts, publishing, updating, and moving published posts back to draft.
-- All public API queries exclude drafts; private list and write permissions use the authenticated user.
-- All 14 API tests, frontend lint, and production build passed.
-- Migration 006 applied on 2026-09-20; all six existing posts remain published.
-- Manual browser checks are in TASK4_VERIFICATION.md. No cloud deployment performed.
+- Fourteen API tests, frontend lint, and production build passed.
+- Draft migration applied; existing posts preserved as published.
+- Live working-behavior confirmation came from the user; browser checks were not individually observed through automation.
 
 ## 5. Categories, search, and pagination
 - [ ] Phase complete and verified
@@ -75,7 +72,13 @@ Verification: Implemented; awaiting user verification after manual deployment.
 - [ ] Add pagination or a load-more control with consistent ordering.
 - [ ] Verify combined filters, empty results, and page boundaries.
 
-Verification / completion date: Pending.
+Verification: Implemented locally; awaiting manual deployment and user verification.
+
+- Categories available in the editor and as homepage filters; labels shown on cards and articles.
+- Server-side search covers title, summary, and article body across published posts, combined with category filtering.
+- Six-post pages, total count, Previous/Next controls, filter reset to page one, request cancellation, and empty/error states added.
+- All 17 API tests, frontend lint, and production build passed.
+- Migration 007 applied and verified; existing posts use General. Manual checks in TASK5_VERIFICATION.md.
 
 ## 6. Comments and reactions
 - [ ] Phase complete and verified
@@ -130,4 +133,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 4: Manage posts and drafts. Awaiting manual deployment and user verification.
+Step 5: Categories, search, and pagination. Awaiting manual deployment and user verification.

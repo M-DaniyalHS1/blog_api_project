@@ -1237,3 +1237,11 @@ footer p {
 .editor-help { color: #b7c0d1; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
 .form-buttons { flex-wrap: wrap; align-items: center; }
 .account-actions { flex-wrap: wrap; }
+
+.category-filters { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 8px; }
+.category-filters button { padding: 9px 16px; border: 1px solid #34405b; border-radius: 24px; background: #0c1320; color: #bdc6d8; }
+.category-filters .selected { color: white; background: #6554ee; border-color: #8977ff; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 28px 0; flex-wrap: wrap; }
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.create-modal select { width: 100%; margin-bottom: 16px; padding: 10px 12px; border: 1px solid #303b54; border-radius: 10px; background: #0b1220; color: white; font: inherit; }
+.create-modal select:focus-visible, .category-filters button:focus-visible { outline: 2px solid #a799ff; outline-offset: 3px; }

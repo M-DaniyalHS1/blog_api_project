@@ -3,6 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 
+Category = Literal["General", "News", "Technology", "Sports", "Lifestyle", "Opinion", "Culture"]
+
+
 class UserPublic(BaseModel):
     id: int
     username: str
@@ -50,6 +53,7 @@ class BlogCreate(BaseModel):
     title :str 
     content: str = ""
     status: Literal["draft", "published"] = "published"
+    category: Category = "General"
     summary: str | None = Field(default=None, max_length=500)
     image_url: str | None = None
 
@@ -67,6 +71,7 @@ class BlogResponse(BaseModel):
     title : str
     content : str
     status: Literal["draft", "published"] = "published"
+    category: Category = "General"
     summary: str | None = None
     image_url: str | None = None
 

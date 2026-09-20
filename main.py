@@ -7,7 +7,7 @@ from auth import (create_token, verify_token, verify_password, password_hash,
 from account_setup import initialize_admin
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from sqlalchemy import select, update
+from sqlalchemy import select, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
@@ -124,6 +124,7 @@ def create_blog(blog: schemas.BlogCreate, db: Session = Depends(get_db), user = 
         source_url=blog.source_url,
         author_id=user.id,
         status=blog.status,
+        category=blog.category,
         published_at=datetime.now(timezone.utc) if blog.status == "published" else None
     )
     db.add(new_blog)
@@ -134,13 +135,22 @@ def create_blog(blog: schemas.BlogCreate, db: Session = Depends(get_db), user = 
 
 # Read all blogs (ordered by ID)
 @app.get("/blogs")
-def get_table(page:int = 1,
-              limit:int = 5,
-              search:str = Query(default=""),
+def get_table(page:int = Query(1, ge=1),
+              limit:int = Query(5, ge=1, le=50),
+              search:str = Query(default="", max_length=200),
+              category: schemas.Category | None = None,
               db: Session = Depends(get_db)):
     query = db.query(model.Blog).options(joinedload(model.Blog.author)).filter(model.Blog.status == "published")
-    if search:
-        query = query.filter(model.Blog.title.ilike(f"%{search}%"))
+    term = search.strip()
+    if term:
+        # Escape SQL wildcard characters so user searches are literal substrings.
+        escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
+        query = query.filter(or_(model.Blog.title.ilike(pattern, escape="\\"),
+                                 model.Blog.content.ilike(pattern, escape="\\"),
+                                 model.Blog.summary.ilike(pattern, escape="\\")))
+    if category:
+        query = query.filter(model.Blog.category == category)
     query = query.order_by(model.Blog.id.desc())
     total = query.count()
     start = (page -1) * limit
@@ -192,6 +202,8 @@ def update_blog(
     if next_status == "published" and existing_blog.status == "draft" and existing_blog.published_at is None:
         existing_blog.published_at = datetime.now(timezone.utc)
     existing_blog.status = next_status
+    if "category" in blog.model_fields_set:
+        existing_blog.category = blog.category
     existing_blog.title = blog.title
     existing_blog.content = blog.content
     if "summary" in blog.model_fields_set:

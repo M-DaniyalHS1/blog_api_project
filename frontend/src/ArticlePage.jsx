@@ -56,7 +56,7 @@ export default function ArticlePage({ id, apiUrl }) {
         {!loading && !error && post && (
           <article>
             <header className="article-header">
-              <span className="section-label">DANI BLOGS</span>
+              <span className="section-label">{post.category || "General"}</span>
               <h1>{post.title}</h1>
               {post.author && <p className="article-date"><a href={`#/authors/${post.author.id}`}>By {post.author.display_name || post.author.username}</a></p>}
               {post.summary?.trim() && <p className="article-summary">{post.summary}</p>}

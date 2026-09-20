@@ -4,6 +4,8 @@ import ArticlePage from "./ArticlePage.jsx";
 import { useEffect, useState } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://blog-api-ecef21cc.fastapicloud.dev";
+const CATEGORIES = ["General", "News", "Technology", "Sports", "Lifestyle", "Opinion", "Culture"];
+const PAGE_SIZE = 6;
 const API_URL = `${API_BASE_URL}/blogs`;
 
 async function getErrorMessage(response, fallback) {
@@ -50,6 +52,11 @@ function HomeApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [revision, setRevision] = useState(0);
+  const [postCategory, setPostCategory] = useState("General");
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -193,6 +200,7 @@ function HomeApp() {
   function editPost(post) {
     setEditingId(post.id);
     setEditingStatus(post.status);
+    setPostCategory(post.category || "General");
     setTitle(post.title); setContent(post.content);
     setSummary(post.summary || ""); setImageUrl(post.image_url || ""); setSourceUrl(post.source_url || "");
     setManagingPosts(false);
@@ -200,7 +208,7 @@ function HomeApp() {
   }
 
   function newPost() {
-    setEditingId(null); setEditingStatus("draft");
+    setEditingId(null); setEditingStatus("draft"); setPostCategory("General");
     setTitle(""); setContent(""); setSummary(""); setImageUrl(""); setSourceUrl("");
     openAuth("login", false);
   }
@@ -250,6 +258,7 @@ function HomeApp() {
           title,
           content,
           status: desiredStatus,
+          category: postCategory,
           summary: summary.trim() || null,
           image_url: imageUrl.trim() || null,
           source_url: sourceUrl.trim() || null,
@@ -292,41 +301,44 @@ function HomeApp() {
     }
   }
 
-  async function loadBlogs() {
-    try {
-      setLoading(true);
+  function loadBlogs() {
+    setLoading(true);
+    setRevision(value => value + 1);
+  }
 
-      const response = await fetch(API_URL);
+  function changeSearch(value) {
+    setSearch(value); setPage(1); setLoading(true); setRevision(previous => previous + 1);
+  }
 
-      if (!response.ok) {
-        throw new Error("Failed to load blogs");
-      }
+  function changeCategory(value) {
+    setFilterCategory(value); setPage(1); setLoading(true);
+  }
 
-      const data = await response.json();
-
-      setBlogs(data.data);
-      setError("");
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
+  function changePage(value) {
+    setPage(value); setLoading(true);
+    document.getElementById("posts")?.scrollIntoView({ behavior: "smooth" });
   }
 
   useEffect(() => {
-    loadBlogs();
-  }, []);
-
-  const filteredBlogs = blogs.filter((blog) => {
-    const searchText = search.toLowerCase();
-
-    return (
-      blog.title.toLowerCase().includes(searchText) ||
-      blog.content.toLowerCase().includes(searchText) ||
-      (blog.summary || "").toLowerCase().includes(searchText)
-    );
-  });
-
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setError("");
+      try {
+        const query = new URLSearchParams({ page, limit: PAGE_SIZE, search: search.trim() });
+        if (filterCategory) query.set("category", filterCategory);
+        const response = await fetch(`${API_URL}?${query}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Could not load posts. Please try again.");
+        const data = await response.json();
+        if (controller.signal.aborted) return;
+        const lastPage = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
+        if (page > lastPage) { setPage(lastPage); return; }
+        setBlogs(data.data); setTotal(data.total); setLoading(false);
+      } catch (err) {
+        if (!controller.signal.aborted) { setError(err.message); setLoading(false); }
+      }
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [search, filterCategory, page, revision]);
 
   return (
     <div className="app" id="home">
@@ -354,7 +366,9 @@ function HomeApp() {
             type="text"
             placeholder="Search posts..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => changeSearch(event.target.value)}
+            maxLength={200}
+            aria-label="Search all published posts"
           />
 
           {!token ? (
@@ -414,10 +428,15 @@ function HomeApp() {
             type="text"
             placeholder="Search blog posts..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => changeSearch(event.target.value)}
+            maxLength={200}
+            aria-label="Search all published posts"
           />
         </div>
 
+        <div className="category-filters" aria-label="Filter posts by category">
+          {["", ...CATEGORIES].map(category => <button key={category || "all"} className={filterCategory === category ? "selected" : ""} aria-pressed={filterCategory === category} onClick={() => { if (category !== filterCategory) changeCategory(category); }}>{category || "All"}</button>)}
+        </div>
       </section>
 
       {/* CONTENT */}
@@ -429,7 +448,7 @@ function HomeApp() {
               <h2>From the Blog</h2>
             </div>
 
-            <span>{filteredBlogs.length} posts</span>
+            <span aria-live="polite">{loading ? "Searching…" : `${total} ${total === 1 ? "post" : "posts"}`}</span>
           </div>
 
           {loading && (
@@ -440,25 +459,25 @@ function HomeApp() {
 
           {error && (
             <div className="status-card error">
-              <p>{error}</p>
+              <p>{error}</p><button className="account-link" onClick={loadBlogs}>Retry</button>
             </div>
           )}
 
-          {!loading && !error && filteredBlogs.length === 0 && (
+          {!loading && !error && total === 0 && (
             <div className="status-card">
-              <p>No posts found.</p>
+              <p>No posts match your search and category.</p><button className="account-link" onClick={() => { changeSearch(""); setFilterCategory(""); }}>Clear filters</button>
             </div>
           )}
 
           <div className="posts-list">
-            {filteredBlogs.map((blog) => (
+            {!loading && !error && blogs.map((blog) => (
               <article className="post-card" id={`post-${blog.id}`} key={blog.id}>
                 <div className="post-thumbnail">
                   <BlogImage key={blog.image_url || "placeholder"} url={blog.image_url} />
                 </div>
 
                 <div className="post-content">
-                  <span className="post-category">BLOG POST</span>
+                  <span className="post-category">{blog.category || "General"}</span>
 
                   <h3><a href={`#/posts/${blog.id}`}>{blog.title}</a></h3>
                   <p className="post-excerpt">{blog.summary?.trim() || (blog.content.length > 220 ? `${blog.content.slice(0, 220)}…` : blog.content)}</p>
@@ -474,6 +493,11 @@ function HomeApp() {
               </article>
             ))}
           </div>
+          {!loading && !error && total > PAGE_SIZE && <nav className="pagination" aria-label="Post pages">
+            <button className="cancel-button" disabled={page === 1} onClick={() => changePage(page - 1)}>Previous</button>
+            <span>Page {page} of {Math.ceil(total / PAGE_SIZE)}</span>
+            <button className="cancel-button" disabled={page * PAGE_SIZE >= total} onClick={() => changePage(page + 1)}>Next</button>
+          </nav>}
         </section>
 
         {/* SIDEBAR */}
@@ -618,6 +642,10 @@ function HomeApp() {
               {token && (
                 <>
               <p className="editor-help">Save a private draft to finish later, or publish for everyone to read.</p>
+              <label htmlFor="post-category">Category</label>
+              <select id="post-category" value={postCategory} onChange={event => setPostCategory(event.target.value)}>
+                {CATEGORIES.map(category => <option key={category}>{category}</option>)}
+              </select>
               <label htmlFor="post-title">Title</label>
               <input
                 id="post-title"
