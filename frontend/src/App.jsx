@@ -1,4 +1,5 @@
 import MyPosts from "./MyPosts.jsx";
+import Chatbot from "./Chatbot.jsx";
 import { AuthorPage, ProfileEditor } from "./Profile.jsx";
 import ArticlePage from "./ArticlePage.jsx";
 import { useEffect, useState } from "react";
@@ -755,6 +756,7 @@ function App() {
   return (
     <>
       <div hidden={isArticle}><HomeApp token={token} setToken={setToken} currentUser={currentUser} setCurrentUser={setCurrentUser} /></div>
+      <Chatbot key={match?.[1] || "feed"} apiBase={API_BASE_URL} articleId={match?.[1]} />
       {authorMatch ? <AuthorPage key={hash} id={authorMatch[1]} apiBase={API_BASE_URL} /> : isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} token={token} user={currentUser} onExpired={() => { setToken(""); setCurrentUser(null); }} onLogin={() => {
         const returnTo = window.location.hash;
         window.location.hash = "#home";

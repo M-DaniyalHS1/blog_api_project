@@ -52,3 +52,10 @@ class Like(base):
     __tablename__ = "likes"
     blog_id = Column(Integer, ForeignKey("blogs.id", ondelete="CASCADE"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+
+
+class ChatUsage(base):
+    __tablename__ = "chat_usage"
+    key = Column(String(100), primary_key=True)
+    count = Column(Integer, nullable=False, default=0)
+    expires_at = Column(Integer, nullable=False, index=True)

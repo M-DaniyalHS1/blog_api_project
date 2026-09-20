@@ -85,9 +85,18 @@ Verification / completion date: 2026-09-20. Marked complete at the user's explic
 - [ ] Enforce permissions and prevent duplicate reactions.
 - [ ] Verify counts and persistence after refresh.
 
-Verification / completion date: Pending.
+Verification: Implemented; awaiting manual deployment and user verification.
+
+- Published articles have paginated comments and a Like toggle. Login returns readers to the article.
+- Authors can edit/delete their own comments; deletion requires confirmation in the UI.
+- Unique database keys prevent duplicate likes; unlike is idempotent. Discussion on drafts is hidden.
+- Deleting a post also removes its comments and likes.
+- 21 application tests plus 3 startup-retry tests passed (24 total); frontend lint and build passed.
+- Migration 008 applied and verified. User-provided deployment logs showed a temporary Supabase DNS failure; startup now retries that specific failure up to four times, then fails explicitly.
+- User will deploy manually. See TASK6_VERIFICATION.md; Task 6 is not yet complete.
 
 ## 7. Reporting and moderation
+Status: Paused at the user's request on 2026-09-20. Resume when requested.
 - [ ] Phase complete and verified
 - [ ] Allow users to report posts and comments.
 - [ ] Build an admin report-review interface.
@@ -98,6 +107,7 @@ Verification / completion date: Pending.
 Verification / completion date: Pending.
 
 ## 8. Reader chatbot: Ask Dani Blogs
+Status: Implemented locally; awaiting API-key configuration, manual deployment, and live verification.
 - [ ] Phase complete and verified
 - [ ] Add a closable chat panel with starter questions.
 - [ ] Find posts, summarize articles, and answer questions from published content.
@@ -107,7 +117,7 @@ Verification / completion date: Pending.
 - [ ] Keep AI credentials on the FastAPI backend and add usage limits.
 - [ ] Verify citations, unavailable answers, and service errors.
 
-Verification / completion date: Pending.
+Verification: 31 backend tests passed, including 7 chatbot tests; frontend lint and production build passed. Migration 009 applied and verified. Provider responses were mocked; real AI answers and browser behavior await manual verification. See TASK8_VERIFICATION.md for setup and checks. Keep this phase unchecked until the user confirms it works.
 
 ## 9. Writing assistant
 - [ ] Phase complete and verified
@@ -131,4 +141,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 6: Comments and reactions. Not started.
+Step 8: Configure and verify Ask Dani Blogs after manual deployment. Task 7 is paused. Task 6 still awaits user confirmation.

@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException,Query
+from fastapi import FastAPI, Depends, HTTPException,Query, Request
+from chatbot import ChatQuestion, answer_question
+from auth import SECRET_KEY
 from database import engine, sessionlocal
 from sqlalchemy.orm import Session
 import model, schemas
@@ -8,17 +10,36 @@ from account_setup import initialize_admin
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from sqlalchemy import select, update, or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
+import asyncio
+import logging
 from sqlalchemy.orm import joinedload
 
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 
-@asynccontextmanager
-async def lifespan(app):
+def initialize_database():
     model.base.metadata.create_all(bind=engine)
     with sessionlocal() as db:
         initialize_admin(db, ADMIN_USERNAME, ADMIN_PASSWORD_HASH)
+
+
+async def connect_database():
+    for attempt in range(5):
+        try:
+            await asyncio.to_thread(initialize_database)
+            return
+        except OperationalError as exc:
+            dns_failure = "temporary failure in name resolution" in str(exc.orig).lower()
+            if not dns_failure or attempt == 4:
+                raise
+            logging.getLogger(__name__).warning("Temporary database DNS failure; retrying startup (%s/4).", attempt + 1)
+            await asyncio.sleep(2 ** (attempt + 1))
+
+
+@asynccontextmanager
+async def lifespan(app):
+    await connect_database()
     yield
 
 
@@ -45,6 +66,11 @@ def current_user(payload: dict = Depends(verify_token), db: Session = Depends(ge
     if not user or user.token_version != payload["ver"]:
         raise HTTPException(401, "Invalid or expired session", headers={"WWW-Authenticate": "Bearer"})
     return user
+
+
+@app.post("/chat")
+def chat(question: ChatQuestion, request: Request, db: Session = Depends(get_db)):
+    return answer_question(db, question, request.client.host if request.client else "unknown", SECRET_KEY)
 
 
 @app.post("/register", response_model=schemas.UserPublic, status_code=201)
