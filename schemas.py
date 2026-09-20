@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 
@@ -47,7 +48,8 @@ class UserRegister(BaseModel):
 #input schema
 class BlogCreate(BaseModel):
     title :str 
-    content :str
+    content: str = ""
+    status: Literal["draft", "published"] = "published"
     summary: str | None = Field(default=None, max_length=500)
     image_url: str | None = None
 
@@ -64,6 +66,7 @@ class BlogResponse(BaseModel):
     id : int
     title : str
     content : str
+    status: Literal["draft", "published"] = "published"
     summary: str | None = None
     image_url: str | None = None
 

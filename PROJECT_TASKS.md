@@ -43,19 +43,13 @@ Verification / completion date: 2026-09-20. Complete based on user confirmation 
 - Live confirmation came from the user; automated browser checks were not performed.
 
 ## 3. Author profiles
-- [ ] Phase complete and verified
-- [ ] Add an author name, picture, and short bio.
-- [ ] Create profile pages listing the author's published posts.
-- [ ] Link articles to their authors.
-- [ ] Allow users to edit only their own profiles.
+- [x] Phase complete and verified
+- [x] Add an author name, picture, and short bio.
+- [x] Create profile pages listing the author's published posts.
+- [x] Link articles to their authors.
+- [x] Allow users to edit only their own profiles.
 
-Verification: Implemented locally; awaiting manual deployment and user confirmation.
-
-- Added optional display name, bio, and picture URL, public author pages, author links, and an authenticated profile editor.
-- Backend tests cover own-profile editing, private-field protection, invalid URLs, field clearing, author post filtering, pagination, and missing authors. All 12 API tests passed.
-- Frontend lint and production build passed.
-- Migration 005 applied and verified on 2026-09-20. Existing users and posts preserved.
-- User deploys manually and checks TASK3_VERIFICATION.md before completion.
+Verification / completion date: 2026-09-20. User confirmed profiles work after manual deployment. All 12 API tests, lint, and build passed.
 
 ## 4. Manage posts and drafts
 - [ ] Phase complete and verified
@@ -65,7 +59,14 @@ Verification: Implemented locally; awaiting manual deployment and user confirmat
 - [ ] Enforce ownership in the backend, not only in the interface.
 - [ ] Verify draft persistence, publishing, editing, and deletion.
 
-Verification / completion date: Pending.
+Verification: Implemented; awaiting user verification after manual deployment.
+
+- My posts lists the user's published posts and private drafts, with edit and confirmed delete actions.
+- Editor supports saving drafts, publishing, updating, and moving published posts back to draft.
+- All public API queries exclude drafts; private list and write permissions use the authenticated user.
+- All 14 API tests, frontend lint, and production build passed.
+- Migration 006 applied on 2026-09-20; all six existing posts remain published.
+- Manual browser checks are in TASK4_VERIFICATION.md. No cloud deployment performed.
 
 ## 5. Categories, search, and pagination
 - [ ] Phase complete and verified
@@ -129,4 +130,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 3: Author profiles. Awaiting manual deployment and live verification.
+Step 4: Manage posts and drafts. Awaiting manual deployment and user verification.

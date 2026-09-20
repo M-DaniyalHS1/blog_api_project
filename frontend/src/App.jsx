@@ -1,3 +1,4 @@
+import MyPosts from "./MyPosts.jsx";
 import { AuthorPage, ProfileEditor } from "./Profile.jsx";
 import ArticlePage from "./ArticlePage.jsx";
 import { useEffect, useState } from "react";
@@ -68,6 +69,9 @@ function HomeApp() {
   const [authOnly, setAuthOnly] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
+  const [managingPosts, setManagingPosts] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editingStatus, setEditingStatus] = useState("draft");
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -176,6 +180,8 @@ function HomeApp() {
       setConfirmPassword("");
       setCreateError("");
       setShowCreateForm(false);
+      setManagingPosts(false); setEditingProfile(false); setEditingId(null);
+      setTitle(""); setContent(""); setSummary(""); setImageUrl(""); setSourceUrl("");
     } catch {
       setCreateError("Could not log out. Check your connection and try again.");
       setShowCreateForm(true);
@@ -184,15 +190,32 @@ function HomeApp() {
     }
   }
 
+  function editPost(post) {
+    setEditingId(post.id);
+    setEditingStatus(post.status);
+    setTitle(post.title); setContent(post.content);
+    setSummary(post.summary || ""); setImageUrl(post.image_url || ""); setSourceUrl(post.source_url || "");
+    setManagingPosts(false);
+    openAuth("login", false);
+  }
+
+  function newPost() {
+    setEditingId(null); setEditingStatus("draft");
+    setTitle(""); setContent(""); setSummary(""); setImageUrl(""); setSourceUrl("");
+    openAuth("login", false);
+  }
+
   async function handleCreatePost(event) {
     event.preventDefault();
+    if (submitting) return;
+    const desiredStatus = event.nativeEvent.submitter?.value || editingStatus;
 
     if (!token) {
       setCreateError("Log in before publishing your post.");
       return;
     }
 
-    if (!title.trim() || !content.trim()) {
+    if (desiredStatus === "published" && (!title.trim() || !content.trim())) {
       setCreateError("Title and content are required.");
       return;
     }
@@ -211,8 +234,14 @@ function HomeApp() {
       setSubmitting(true);
       setCreateError("");
 
-      const response = await fetch(API_URL, {
-        method: "POST",
+      if (desiredStatus === "draft") {
+        const capability = await fetch(`${API_BASE_URL}/me/posts?limit=1`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!capability.ok) {
+          throw new Error(capability.status === 401 ? "Your session expired. Log in again before saving." : "Draft saving is not available yet. Deploy the Task 4 backend before saving a private draft.");
+        }
+      }
+      const response = await fetch(editingId ? `${API_URL}/${editingId}` : API_URL, {
+        method: editingId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -220,6 +249,7 @@ function HomeApp() {
         body: JSON.stringify({
           title,
           content,
+          status: desiredStatus,
           summary: summary.trim() || null,
           image_url: imageUrl.trim() || null,
           source_url: sourceUrl.trim() || null,
@@ -253,6 +283,8 @@ function HomeApp() {
       setImageUrl("");
       setSourceUrl("");
       setShowCreateForm(false);
+      setEditingId(null);
+      setManagingPosts(true);
     } catch (error) {
       setCreateError(error.message);
     } finally {
@@ -334,12 +366,13 @@ function HomeApp() {
             <div className="account-actions">
               <a className="account-name" href={`#/authors/${currentUser?.id}`}>@{currentUser?.username}</a>
               <button className="account-link" onClick={() => setEditingProfile(true)}>Edit profile</button>
+              <button className="account-link" onClick={() => setManagingPosts(true)}>My posts</button>
               <button className="account-link" disabled={loggingOut || submitting} onClick={handleLogout}>{loggingOut ? "Logging out…" : "Log out"}</button>
             </div>
           )}
           <button
             className="new-post-button"
-            onClick={() => openAuth("login", false)}
+            onClick={newPost}
           >
             + New Post
           </button>
@@ -485,6 +518,8 @@ function HomeApp() {
         <p>Fresh stories. Different voices.</p>
       </footer>
 
+      {managingPosts && token && <MyPosts key={token} token={token} apiBase={API_BASE_URL} onEdit={editPost} onClose={() => setManagingPosts(false)} onChanged={loadBlogs} />}
+
       {editingProfile && token && currentUser && <ProfileEditor user={currentUser} token={token} apiBase={API_BASE_URL} onClose={() => setEditingProfile(false)} onSaved={(user) => { setCurrentUser(user); setEditingProfile(false); loadBlogs(); }} />}
 
       {/* CREATE POST MODAL */}
@@ -494,7 +529,7 @@ function HomeApp() {
             <div className="modal-header">
               <div>
                 <span className="section-label">{token ? "CREATE" : "JOIN THE CONVERSATION"}</span>
-                <h2 id="modal-title">{token ? "New Post" : authMode === "register" ? "Create an account" : "Welcome back"}</h2>
+                <h2 id="modal-title">{token ? (editingId ? "Edit post" : "New Post") : authMode === "register" ? "Create an account" : "Welcome back"}</h2>
               </div>
 
               <button
@@ -582,6 +617,7 @@ function HomeApp() {
 
               {token && (
                 <>
+              <p className="editor-help">Save a private draft to finish later, or publish for everyone to read.</p>
               <label htmlFor="post-title">Title</label>
               <input
                 id="post-title"
@@ -638,12 +674,16 @@ function HomeApp() {
                   Cancel
                 </button>
 
+                <button type="submit" value="draft" className="cancel-button" disabled={submitting || loggingIn || !token}>
+                  {editingStatus === "published" ? "Move to draft" : "Save draft"}
+                </button>
                 <button
                   type="submit"
+                  value="published"
                   className="publish-button"
                   disabled={submitting || loggingIn || !token}
                 >
-                  {submitting ? "Publishing..." : "Publish Post"}
+                  {submitting ? "Saving…" : editingStatus === "published" ? "Save changes" : "Publish Post"}
                 </button>
               </div>
                 </>

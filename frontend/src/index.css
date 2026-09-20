@@ -1227,3 +1227,13 @@ footer p {
 .profile-post p { color: #aab4c8; line-height: 1.6; margin: 12px 0; }
 .post-meta a:hover, .article-date a:hover { color: #c4b7ff; text-decoration: underline; }
 @media (max-width: 480px) { .profile-header { align-items: flex-start; flex-direction: column; gap: 8px; } .account-actions { flex-wrap: wrap; } }
+
+.managed-post { padding: 20px 0; border-bottom: 1px solid #27324a; overflow-wrap: anywhere; }
+.managed-actions { display: flex; align-items: center; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+.delete-link { color: #ffaaaa; }
+.delete-confirm { padding: 14px; margin-top: 14px; border: 1px solid #984f5c; border-radius: 10px; }
+.delete-confirm p { margin-bottom: 12px; }
+.delete-confirm button { margin: 4px; }
+.editor-help { color: #b7c0d1; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+.form-buttons { flex-wrap: wrap; align-items: center; }
+.account-actions { flex-wrap: wrap; }

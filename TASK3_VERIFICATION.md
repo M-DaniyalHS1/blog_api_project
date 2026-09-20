@@ -1,6 +1,6 @@
 # Task 3: Author profiles
 
-Status: Implemented; live user verification pending.
+Status: Complete on 2026-09-20 based on user confirmation after manual deployment. Checks below retained for regression verification.
 
 ## What changed
 - Public author pages at `/#/authors/<id>` with display name (username fallback), picture (initial fallback), bio, and newest-first posts with pagination.

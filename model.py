@@ -13,8 +13,9 @@ class Blog(base):
     content = Column(Text)
     image_url = Column(Text, nullable=True)
     source_url = Column(Text, nullable=True)
-    published_at = Column(DateTime(timezone=True), nullable=True, server_default=func.now())
+    published_at = Column(DateTime(timezone=True), nullable=True)
     summary = Column(Text, nullable=True)
+    status = Column(String(16), nullable=False, default="published", server_default="published")
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     author = relationship("User")
 
