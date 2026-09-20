@@ -1,8 +1,9 @@
 import json
+import io
 import os
 import unittest
 from unittest.mock import patch, MagicMock
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 from sqlalchemy.orm import Session
 import test_articles
 import chatbot
@@ -12,6 +13,19 @@ import model
 class ChatTests(unittest.TestCase):
     setUp = test_articles.ArticleTests.setUp
     tearDown = test_articles.ArticleTests.tearDown
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "private-test-key"})
+    @patch("chatbot.urlopen")
+    def test_safe_provider_diagnostics(self, urlopen):
+        self.post()
+        for status, code, category in [(429, "insufficient_quota", "quota_exhausted_check_api_billing"), (401, "invalid_api_key", "authentication_failed_check_api_key"), (404, "model_not_found", "not_found_check_model_access")]:
+            body = json.dumps({"error": {"code": code, "message": "private-test-key"}}).encode()
+            urlopen.side_effect = HTTPError("https://api.openai.com/v1/responses", status, "private-test-key", {}, io.BytesIO(body))
+            with self.assertLogs("chatbot", level="WARNING") as logs:
+                response = self.ask()
+            self.assertEqual(response.status_code, 503)
+            self.assertIn(category, " ".join(logs.output))
+            self.assertNotIn("private-test-key", " ".join(logs.output) + response.text)
 
     def post(self, title="Space launch", status="published"):
         return self.client.post("/blogs", json={"title": title, "content": "The launch took place on Monday.", "status": status}).json()["id"]

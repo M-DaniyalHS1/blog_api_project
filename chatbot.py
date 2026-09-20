@@ -2,17 +2,43 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import time
 from urllib.request import Request, urlopen
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 from fastapi import HTTPException
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from sqlalchemy import select, update, delete, case
 from sqlalchemy.exc import IntegrityError
 import model
+
+logger = logging.getLogger(__name__)
+
+
+def provider_error_category(error):
+    """Only log our own labels, never provider messages or arbitrary response text."""
+    code = None
+    try:
+        body = json.loads(error.read(16000))
+        code = body.get("error", {}).get("code")
+    except (ValueError, OSError, AttributeError, TypeError):
+        pass
+    if code == "insufficient_quota":
+        return "quota_exhausted_check_api_billing"
+    if error.code == 401:
+        return "authentication_failed_check_api_key"
+    if error.code == 403:
+        return "access_denied_check_project_permissions"
+    if error.code == 404:
+        return "not_found_check_model_access"
+    if error.code == 429:
+        return "provider_rate_limit"
+    if error.code == 400:
+        return "invalid_request_check_model_and_parameters"
+    return "provider_http_error"
 
 
 class ChatQuestion(BaseModel):
@@ -113,7 +139,14 @@ def generate_answer(question, sources, key):
             raise ValueError("Incomplete response")
         output = "".join(part.get("text", "") for item in data.get("output", []) if item.get("type") == "message" for part in item.get("content", []) if part.get("type") == "output_text")
         return ModelAnswer.model_validate_json(output)
-    except (URLError, TimeoutError, OSError, ValueError, TypeError, AttributeError):
+    except HTTPError as error:
+        logger.warning("Chat provider failure: status=%s category=%s", error.code, provider_error_category(error))
+        raise HTTPException(503, "The assistant is temporarily unavailable. Please try again later.") from None
+    except (URLError, TimeoutError, OSError):
+        logger.warning("Chat provider failure: category=network_or_timeout")
+        raise HTTPException(503, "The assistant is temporarily unavailable. Please try again later.") from None
+    except (ValueError, TypeError, AttributeError):
+        logger.warning("Chat provider failure: category=invalid_or_incomplete_response")
         # Never expose provider response bodies, credentials, or internal diagnostics.
         raise HTTPException(503, "The assistant is temporarily unavailable. Please try again later.") from None
 
