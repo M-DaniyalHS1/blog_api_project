@@ -28,3 +28,6 @@ class User(base):
     is_admin = Column(Boolean, nullable=False, default=False, server_default="false")
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    display_name = Column(String(80), nullable=True)
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(Text, nullable=True)

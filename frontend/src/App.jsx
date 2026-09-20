@@ -1,3 +1,4 @@
+import { AuthorPage, ProfileEditor } from "./Profile.jsx";
 import ArticlePage from "./ArticlePage.jsx";
 import { useEffect, useState } from "react";
 
@@ -66,6 +67,7 @@ function HomeApp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [authOnly, setAuthOnly] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -330,7 +332,8 @@ function HomeApp() {
             </div>
           ) : (
             <div className="account-actions">
-              <span className="account-name">@{currentUser?.username}</span>
+              <a className="account-name" href={`#/authors/${currentUser?.id}`}>@{currentUser?.username}</a>
+              <button className="account-link" onClick={() => setEditingProfile(true)}>Edit profile</button>
               <button className="account-link" disabled={loggingOut || submitting} onClick={handleLogout}>{loggingOut ? "Logging out…" : "Log out"}</button>
             </div>
           )}
@@ -430,7 +433,7 @@ function HomeApp() {
                   <div className="post-meta">
                     <span>Post #{blog.id}</span>
                     <span>•</span>
-                    <span>{blog.author ? `By ${blog.author.username}` : "Dani Blogs"}</span>
+                    <span>{blog.author ? <a href={`#/authors/${blog.author.id}`}>By {blog.author.display_name || blog.author.username}</a> : "Dani Blogs"}</span>
                   </div>
                 </div>
 
@@ -481,6 +484,8 @@ function HomeApp() {
 
         <p>Fresh stories. Different voices.</p>
       </footer>
+
+      {editingProfile && token && currentUser && <ProfileEditor user={currentUser} token={token} apiBase={API_BASE_URL} onClose={() => setEditingProfile(false)} onSaved={(user) => { setCurrentUser(user); setEditingProfile(false); loadBlogs(); }} />}
 
       {/* CREATE POST MODAL */}
       {showCreateForm && (
@@ -656,17 +661,18 @@ function App() {
   useEffect(() => {
     const updateRoute = () => {
       setHash(window.location.hash);
-      if (window.location.hash.startsWith("#/posts/")) window.scrollTo(0, 0);
+      if (window.location.hash.startsWith("#/")) window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", updateRoute);
     return () => window.removeEventListener("hashchange", updateRoute);
   }, []);
   const match = hash.match(/^#\/posts\/([1-9]\d*)$/);
+  const authorMatch = hash.match(/^#\/authors\/([1-9]\d*)$/);
   const isArticle = hash.startsWith("#/");
   return (
     <>
       <div hidden={isArticle}><HomeApp /></div>
-      {isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} />}
+      {authorMatch ? <AuthorPage key={hash} id={authorMatch[1]} apiBase={API_BASE_URL} /> : isArticle && <ArticlePage key={hash} id={match?.[1]} apiUrl={API_URL} />}
     </>
   );
 }

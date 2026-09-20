@@ -69,12 +69,32 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user or not valid:
         raise HTTPException(401, "Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
     return {"access_token": create_token(user.id, user.token_version), "token_type": "bearer", "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            "user": schemas.UserPublic.model_validate(user)}
+            "user": schemas.ProfilePublic.model_validate(user)}
 
 
-@app.get("/me", response_model=schemas.UserPublic)
+@app.get("/me", response_model=schemas.ProfilePublic)
 def me(user: model.User = Depends(current_user)):
     return user
+
+
+@app.patch("/me/profile", response_model=schemas.ProfilePublic)
+def edit_profile(profile: schemas.ProfileUpdate, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    for name, value in profile.model_dump(exclude_unset=True).items():
+        setattr(user, name, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@app.get("/authors/{author_id}")
+def author_profile(author_id: int, page: int = Query(1, ge=1), limit: int = Query(12, ge=1, le=50), db: Session = Depends(get_db)):
+    author = db.get(model.User, author_id)
+    if not author:
+        raise HTTPException(404, "Author not found")
+    # All current posts are published; Task 4 will introduce draft filtering.
+    posts = db.query(model.Blog).filter(model.Blog.author_id == author_id).order_by(model.Blog.id.desc())
+    return {"author": schemas.ProfilePublic.model_validate(author), "total": posts.count(), "page": page,
+            "data": [schemas.BlogResponse.model_validate(post) for post in posts.offset((page - 1) * limit).limit(limit).all()]}
 
 
 @app.post("/logout", status_code=204)

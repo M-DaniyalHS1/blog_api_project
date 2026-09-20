@@ -6,7 +6,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sqlalchemy import text, select, func
 from database import engine, sessionlocal
 from account_setup import initialize_admin
-from auth import ADMIN_USERNAME, ADMIN_PASSWORD_HASH
+import os
+
+# Migration needs admin credentials, not JWT signing configuration.
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH")
+if not ADMIN_USERNAME or not ADMIN_PASSWORD_HASH:
+    raise RuntimeError("Set ADMIN_USERNAME and ADMIN_PASSWORD_HASH before migrating accounts.")
 import model
 
 sql = (Path(__file__).resolve().parents[1] / "migrations/004_user_accounts.sql").read_text()

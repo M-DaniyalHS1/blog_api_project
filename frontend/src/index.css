@@ -1214,3 +1214,16 @@ footer p {
   .nav-actions { width: 100%; justify-content: space-between; margin-left: 0; }
   .account-name { max-width: 140px; }
 }
+
+/* Author profiles */
+.profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; }
+.profile-header h1 { overflow-wrap: anywhere; font-size: clamp(26px, 5vw, 40px); }
+.profile-header p { color: #aab4c8; }
+.profile-avatar { width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%; object-fit: cover; margin-bottom: 16px; }
+.avatar-placeholder { display: inline-flex; align-items: center; justify-content: center; background: #30234f; color: #d3bcff; font-size: 40px; }
+.profile-bio { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; color: #c0cada; margin-bottom: 36px; }
+.profile-post-heading { margin-bottom: 18px; }
+.profile-post { padding: 24px 0; border-bottom: 1px solid #27324a; margin-bottom: 16px; overflow-wrap: anywhere; }
+.profile-post p { color: #aab4c8; line-height: 1.6; margin: 12px 0; }
+.post-meta a:hover, .article-date a:hover { color: #c4b7ff; text-decoration: underline; }
+@media (max-width: 480px) { .profile-header { align-items: flex-start; flex-direction: column; gap: 8px; } .account-actions { flex-wrap: wrap; } }

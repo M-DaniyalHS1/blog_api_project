@@ -20,19 +20,27 @@ Verification: Complete. User confirmed “task one is working” after choosing 
 - Final working-behavior confirmation came from the user; automated browser verification was unavailable.
 
 ### Task 1 refinement: homepage summary and full article
-- [ ] User verifies the refinement after manual deployment.
+- [x] User verifies the refinement after manual deployment.
+
+User confirmed the refinement is working.
 
 Implemented separate optional summary and full-article fields, paragraph layout on article pages, and fallback excerpts for existing posts. Four API tests, frontend lint, and production build passed. Migration 003 applied and verified. User will deploy manually. Existing posts with only a short paragraph require full article text to be added; source links do not import article text.
 
 ## 2. User accounts
-- [ ] Phase complete and verified
-- [ ] Add registration, login, and logout.
-- [ ] Store hashed passwords and handle invalid credentials and expired sessions.
-- [ ] Assign existing posts to the admin account without losing data.
-- [ ] Enforce authentication on protected backend actions.
-- [ ] Verify separate users and access permissions.
+- [x] Phase complete and verified
+- [x] Add registration, login, and logout.
+- [x] Store hashed passwords and handle invalid credentials and expired sessions.
+- [x] Assign existing posts to the admin account without losing data.
+- [x] Enforce authentication on protected backend actions.
+- [x] Verify separate users and access permissions.
 
-Verification / completion date: Pending.
+Verification / completion date: 2026-09-20. Complete based on user confirmation after manual deployment.
+
+- User confirmed the account changes work after resolving missing deployed routes.
+- Nine isolated API tests passed, including registration, duplicate names, hashing, login failures, ownership, logout revocation, expiry, and admin migration.
+- Frontend lint and build passed.
+- Account migration applied and verified: existing posts preserved and assigned to admin.
+- Live confirmation came from the user; automated browser checks were not performed.
 
 ## 3. Author profiles
 - [ ] Phase complete and verified
@@ -41,7 +49,13 @@ Verification / completion date: Pending.
 - [ ] Link articles to their authors.
 - [ ] Allow users to edit only their own profiles.
 
-Verification / completion date: Pending.
+Verification: Implemented locally; awaiting manual deployment and user confirmation.
+
+- Added optional display name, bio, and picture URL, public author pages, author links, and an authenticated profile editor.
+- Backend tests cover own-profile editing, private-field protection, invalid URLs, field clearing, author post filtering, pagination, and missing authors. All 12 API tests passed.
+- Frontend lint and production build passed.
+- Migration 005 applied and verified on 2026-09-20. Existing users and posts preserved.
+- User deploys manually and checks TASK3_VERIFICATION.md before completion.
 
 ## 4. Manage posts and drafts
 - [ ] Phase complete and verified
@@ -115,4 +129,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 2: User accounts. Not started.
+Step 3: Author profiles. Awaiting manual deployment and live verification.

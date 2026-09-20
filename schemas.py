@@ -9,6 +9,29 @@ class UserPublic(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ProfilePublic(UserPublic):
+    display_name: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
+
+
+class ProfileUpdate(BaseModel):
+    display_name: str | None = Field(default=None, max_length=80)
+    bio: str | None = Field(default=None, max_length=1000)
+    avatar_url: str | None = Field(default=None, max_length=2048)
+    model_config = {"extra": "forbid"}
+
+    @field_validator("display_name", "bio", "avatar_url")
+    @classmethod
+    def clean_text(cls, value):
+        return value.strip() or None if value is not None else None
+
+    @field_validator("avatar_url")
+    @classmethod
+    def check_avatar(cls, value):
+        return str(HttpUrl(value)) if value else None
+
+
 class UserRegister(BaseModel):
     username: str = Field(min_length=3, max_length=32, pattern=r"^[a-z0-9_]+$")
     password: str = Field(min_length=8, max_length=128)
@@ -48,7 +71,7 @@ class BlogResponse(BaseModel):
     published_at: datetime | None = None
 
     author_id: int | None = None
-    author: UserPublic | None = None
+    author: ProfilePublic | None = None
 
     class Config:
         from_attributes = True
