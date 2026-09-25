@@ -14,6 +14,30 @@ class ChatTests(unittest.TestCase):
     setUp = test_articles.ArticleTests.setUp
     tearDown = test_articles.ArticleTests.tearDown
 
+    @patch.dict(os.environ, {"CHAT_PROVIDER": "gemini", "GEMINI_API_KEY": "gemini-test-key", "OPENAI_API_KEY": "must-not-use"})
+    @patch("chatbot.urlopen")
+    def test_gemini_request_response_and_truncation(self, urlopen):
+        id = self.post()
+        response = MagicMock()
+        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({"answer": "Monday", "source_ids": [id], "insufficient_context": False})}}]}).encode()
+        urlopen.return_value.__enter__.return_value = response
+        result = self.ask()
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.json()["sources"][0]["id"], id)
+        request = urlopen.call_args.args[0]
+        self.assertTrue(request.full_url.startswith("https://generativelanguage.googleapis.com/"))
+        self.assertEqual(request.get_header("Authorization"), "Bearer gemini-test-key")
+        payload = json.loads(request.data)
+        self.assertEqual(payload["response_format"]["type"], "json_schema")
+        self.assertNotIn("store", payload)
+        self.assertNotIn("tools", payload)
+        response.read.return_value = b'{"choices":[{"finish_reason":"length"}]}'
+        self.assertEqual(self.ask().status_code, 503)
+
+    @patch.dict(os.environ, {"CHAT_PROVIDER": "gemini", "GEMINI_API_KEY": "", "OPENAI_API_KEY": "must-not-use"})
+    def test_gemini_requires_its_own_key(self):
+        self.assertEqual(self.ask().status_code, 503)
+
     @patch.dict(os.environ, {"OPENAI_API_KEY": "private-test-key"})
     @patch("chatbot.urlopen")
     def test_safe_provider_diagnostics(self, urlopen):

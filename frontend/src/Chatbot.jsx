@@ -74,7 +74,7 @@ export default function Chatbot({ apiBase, articleId }) {
         <label htmlFor="reader-chat-question">Ask about published posts</label>
         <div><input id="reader-chat-question" ref={input} value={question} maxLength={1000} disabled={busy} onChange={event => setQuestion(event.target.value)} placeholder="Type your question…" autoComplete="off" /><button type="submit" disabled={busy || !question.trim()}>Send</button></div>
       </form>
-      <footer className="reader-chat-footer"><span>AI can make mistakes. Check the sources. Questions are sent to OpenAI.</span><button type="button" disabled={busy} onClick={() => { setMessages([]); setError(""); setQuestion(""); input.current?.focus(); }}>Clear chat</button></footer>
+      <footer className="reader-chat-footer"><span>AI can make mistakes. Check the sources. Questions and public excerpts are sent to our AI provider (Google or OpenAI).</span><button type="button" disabled={busy} onClick={() => { setMessages([]); setError(""); setQuestion(""); input.current?.focus(); }}>Clear chat</button></footer>
     </section>}
     <button ref={launcher} type="button" className="reader-chat-launcher" aria-expanded={open} aria-controls="reader-chat-panel" onClick={() => open ? close() : setOpen(true)}>✦ Ask Dani Blogs</button>
   </div>;

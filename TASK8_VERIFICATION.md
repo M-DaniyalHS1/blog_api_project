@@ -4,6 +4,24 @@ Implemented on 2026-09-20; awaiting live verification. Task 7 is paused.
 
 ## Backend setup
 
+### Gemini option (added 2026-09-25)
+
+To use Gemini, set these backend-only environment variables and manually redeploy:
+
+```dotenv
+CHAT_PROVIDER=gemini
+GEMINI_API_KEY=your_private_gemini_api_key
+GEMINI_MODEL=gemini-3.8-flash
+```
+
+Create the key in Google AI Studio. Never paste it into frontend code or chat. Gemini requests use Google's documented [OpenAI-compatible Chat Completions endpoint](https://ai.google.dev/gemini-api/docs/openai), with structured JSON answers. This path does not use the OpenAI Responses endpoint or the OpenAI key. There is no automatic provider fallback. Existing retrieval, citation checks, draft exclusion, and shared request limits apply. Gemini has its own provider quotas and billing rules; switching does not guarantee unlimited usage. Gemini output is capped at 4,096 tokens to allow room for model thinking; answers are still validated to the existing 6,000-character limit.
+
+The default remains `CHAT_PROVIDER=openai` for existing deployments. To switch back, set that value and configure `OPENAI_API_KEY`. The OpenAI-specific settings below apply only to that provider. For Gemini, public excerpts and questions are sent to Google, and OpenAI's `store: false` setting does not apply.
+
+Ten chatbot tests passed, including the Gemini request/response format, key isolation, and incomplete-answer handling. Provider responses were simulated; live Gemini verification is still required.
+
+### OpenAI option
+
 Add these settings to your existing backend `.env` for local development, and to the backend deployment's environment/secrets for production:
 
 ```dotenv

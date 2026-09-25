@@ -18,15 +18,24 @@ import model
 logger = logging.getLogger(__name__)
 
 
+def chat_provider():
+    provider = os.getenv("CHAT_PROVIDER", "openai").strip().lower()
+    if provider not in ("openai", "gemini"):
+        raise HTTPException(503, "The assistant provider is not configured correctly.")
+    return provider
+
+
 def provider_error_category(error):
     """Only log our own labels, never provider messages or arbitrary response text."""
     code = None
+    error_type = None
     try:
         body = json.loads(error.read(16000))
         code = body.get("error", {}).get("code")
+        error_type = body.get("error", {}).get("type")
     except (ValueError, OSError, AttributeError, TypeError):
         pass
-    if code == "insufficient_quota":
+    if code in ("insufficient_quota", "billing_hard_limit_reached", "organization_spend_limit_exceeded", "project_spend_limit_exceeded", "organization_usage_limit_exceeded", "billing_not_active", "insufficient_credits") or error_type == "insufficient_quota":
         return "quota_exhausted_check_api_billing"
     if error.code == 401:
         return "authentication_failed_check_api_key"
@@ -35,7 +44,7 @@ def provider_error_category(error):
     if error.code == 404:
         return "not_found_check_model_access"
     if error.code == 429:
-        return "provider_rate_limit"
+        return "provider_rate_limit" if code in ("rate_limit_exceeded", "slow_down") or error_type == "rate_limit_error" else "provider_429_check_billing_and_rate_limits"
     if error.code == 400:
         return "invalid_request_check_model_and_parameters"
     return "provider_http_error"
@@ -131,13 +140,29 @@ def generate_answer(question, sources, key):
         "input": json.dumps({"question": question.question, "previous_question": question.previous_question, "articles": sources}),
         "text": {"format": {"type": "json_schema", "name": "blog_answer", "strict": True, "schema": schema}},
     }
-    request = Request("https://api.openai.com/v1/responses", data=json.dumps(payload).encode(), headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
+    provider = chat_provider()
+    endpoint = "https://api.openai.com/v1/responses"
+    if provider == "gemini":
+        endpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+        payload = {
+            "model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
+            "messages": [{"role": "system", "content": payload["instructions"]}, {"role": "user", "content": payload["input"]}],
+            "max_tokens": 4096,
+            "response_format": {"type": "json_schema", "json_schema": {"name": "blog_answer", "strict": True, "schema": schema}},
+        }
+    request = Request(endpoint, data=json.dumps(payload).encode(), headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
     try:
         with urlopen(request, timeout=30) as response:
             data = json.loads(response.read(200000))
-        if data.get("status") != "completed":
-            raise ValueError("Incomplete response")
-        output = "".join(part.get("text", "") for item in data.get("output", []) if item.get("type") == "message" for part in item.get("content", []) if part.get("type") == "output_text")
+        if provider == "gemini":
+            choices = data.get("choices") or []
+            if not choices or choices[0].get("finish_reason") != "stop":
+                raise ValueError("Incomplete response")
+            output = choices[0].get("message", {}).get("content")
+        else:
+            if data.get("status") != "completed":
+                raise ValueError("Incomplete response")
+            output = "".join(part.get("text", "") for item in data.get("output", []) if item.get("type") == "message" for part in item.get("content", []) if part.get("type") == "output_text")
         return ModelAnswer.model_validate_json(output)
     except HTTPError as error:
         logger.warning("Chat provider failure: status=%s category=%s", error.code, provider_error_category(error))
@@ -152,7 +177,7 @@ def generate_answer(question, sources, key):
 
 
 def answer_question(db, question, address, secret):
-    key = os.getenv("OPENAI_API_KEY", "").strip()
+    key = os.getenv("GEMINI_API_KEY" if chat_provider() == "gemini" else "OPENAI_API_KEY", "").strip()
     if not key:
         raise HTTPException(503, "The assistant is not configured yet. Please try again later.")
     reserve_usage(db, address, secret)
