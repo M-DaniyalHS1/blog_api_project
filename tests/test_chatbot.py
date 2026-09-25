@@ -1,9 +1,7 @@
 import json
-import io
 import os
 import unittest
-from unittest.mock import patch, MagicMock
-from urllib.error import URLError, HTTPError
+from unittest.mock import patch
 from sqlalchemy.orm import Session
 import test_articles
 import chatbot
@@ -15,41 +13,44 @@ class ChatTests(unittest.TestCase):
     tearDown = test_articles.ArticleTests.tearDown
 
     @patch.dict(os.environ, {"CHAT_PROVIDER": "gemini", "GEMINI_API_KEY": "gemini-test-key", "OPENAI_API_KEY": "must-not-use"})
-    @patch("chatbot.urlopen")
-    def test_gemini_request_response_and_truncation(self, urlopen):
+    def test_gemini_agent_structured_answer(self):
+        from unittest.mock import AsyncMock
+        from openai.types.chat import ChatCompletion
         id = self.post()
-        response = MagicMock()
-        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {"content": json.dumps({"answer": "Monday", "source_ids": [id], "insufficient_context": False})}}]}).encode()
-        urlopen.return_value.__enter__.return_value = response
-        result = self.ask()
-        self.assertEqual(result.status_code, 200)
+        completion = ChatCompletion(id="test", created=0, model="gemini-test", object="chat.completion",
+            choices=[{"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": json.dumps({"answer": "Monday", "source_ids": [id], "insufficient_context": False})}}])
+        client = AsyncMock()
+        client.__aenter__.return_value = client
+        client.chat.completions.create.return_value = completion
+        with patch("chatbot.AsyncOpenAI", return_value=client) as factory, patch("chatbot.Runner.run", wraps=chatbot.Runner.run) as runner:
+            result = self.ask()
+        self.assertEqual(result.status_code, 200, result.text)
         self.assertEqual(result.json()["sources"][0]["id"], id)
-        request = urlopen.call_args.args[0]
-        self.assertTrue(request.full_url.startswith("https://generativelanguage.googleapis.com/"))
-        self.assertEqual(request.get_header("Authorization"), "Bearer gemini-test-key")
-        payload = json.loads(request.data)
+        self.assertEqual(factory.call_args.kwargs["api_key"], "gemini-test-key")
+        self.assertIn("generativelanguage.googleapis.com", factory.call_args.kwargs["base_url"])
+        self.assertEqual(factory.call_args.kwargs["max_retries"], 0)
+        self.assertTrue(runner.call_args.kwargs["run_config"].tracing_disabled)
+        self.assertEqual(runner.call_args.kwargs["max_turns"], 1)
+        payload = client.chat.completions.create.call_args.kwargs
         self.assertEqual(payload["response_format"]["type"], "json_schema")
-        self.assertNotIn("store", payload)
-        self.assertNotIn("tools", payload)
-        response.read.return_value = b'{"choices":[{"finish_reason":"length"}]}'
-        self.assertEqual(self.ask().status_code, 503)
+        self.assertFalse(runner.call_args.args[0].tools)
+
+    @patch.dict(os.environ, {"CHAT_PROVIDER": "gemini", "GEMINI_API_KEY": "gemini-test-key"})
+    def test_agent_failure_is_redacted_and_retry_bounded(self):
+        import httpx
+        from openai import APIStatusError
+        from unittest.mock import AsyncMock
+        self.post()
+        error = APIStatusError("private-test-key", response=httpx.Response(503, request=httpx.Request("POST", "https://example.test")), body={})
+        with patch("chatbot.Runner.run", new_callable=AsyncMock, side_effect=error) as runner, patch("chatbot.asyncio.sleep", new_callable=AsyncMock):
+            result = self.ask()
+        self.assertEqual(result.status_code, 503)
+        self.assertNotIn("private-test-key", result.text)
+        self.assertEqual(runner.call_count, 2)
 
     @patch.dict(os.environ, {"CHAT_PROVIDER": "gemini", "GEMINI_API_KEY": "", "OPENAI_API_KEY": "must-not-use"})
     def test_gemini_requires_its_own_key(self):
         self.assertEqual(self.ask().status_code, 503)
-
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "private-test-key"})
-    @patch("chatbot.urlopen")
-    def test_safe_provider_diagnostics(self, urlopen):
-        self.post()
-        for status, code, category in [(429, "insufficient_quota", "quota_exhausted_check_api_billing"), (401, "invalid_api_key", "authentication_failed_check_api_key"), (404, "model_not_found", "not_found_check_model_access")]:
-            body = json.dumps({"error": {"code": code, "message": "private-test-key"}}).encode()
-            urlopen.side_effect = HTTPError("https://api.openai.com/v1/responses", status, "private-test-key", {}, io.BytesIO(body))
-            with self.assertLogs("chatbot", level="WARNING") as logs:
-                response = self.ask()
-            self.assertEqual(response.status_code, 503)
-            self.assertIn(category, " ".join(logs.output))
-            self.assertNotIn("private-test-key", " ".join(logs.output) + response.text)
 
     def post(self, title="Space launch", status="published"):
         return self.client.post("/blogs", json={"title": title, "content": "The launch took place on Monday.", "status": status}).json()["id"]
@@ -57,7 +58,7 @@ class ChatTests(unittest.TestCase):
     def ask(self, **kwargs):
         return self.client.post("/chat", json={"question": "Space launch", **kwargs})
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"})
     @patch("chatbot.generate_answer")
     def test_public_sources_and_draft_exclusion(self, generate):
         public = self.post()
@@ -71,7 +72,7 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(self.ask(article_id=draft).json(), chatbot.FALLBACK)
         generate.assert_not_called()
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"})
     @patch("chatbot.generate_answer")
     def test_invalid_citations_and_insufficient_evidence(self, generate):
         self.post()
@@ -82,7 +83,7 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(self.ask(question="Unrelated zebras").json(), chatbot.FALLBACK)
         generate.assert_not_called()
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"})
     @patch("chatbot.generate_answer")
     def test_unpublished_during_response(self, generate):
         id = self.post()
@@ -94,7 +95,7 @@ class ChatTests(unittest.TestCase):
         generate.side_effect = unpublish
         self.assertEqual(self.ask().json(), chatbot.FALLBACK)
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key", "CHAT_DAILY_LIMIT": "2", "CHAT_HOURLY_LIMIT": "10"})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key", "CHAT_DAILY_LIMIT": "2", "CHAT_HOURLY_LIMIT": "10"})
     def test_shared_limit_persists_across_requests(self):
         self.assertEqual(self.ask().status_code, 200)
         self.assertEqual(self.ask().status_code, 200)
@@ -102,41 +103,17 @@ class ChatTests(unittest.TestCase):
         self.assertEqual(response.status_code, 429)
         self.assertIn("Retry-After", response.headers)
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key", "CHAT_DAILY_LIMIT": "100", "CHAT_HOURLY_LIMIT": "1"})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "test-key", "CHAT_DAILY_LIMIT": "100", "CHAT_HOURLY_LIMIT": "1"})
     def test_reader_limit(self):
         self.assertEqual(self.ask().status_code, 200)
         self.assertEqual(self.ask().status_code, 429)
 
-    @patch.dict(os.environ, {"OPENAI_API_KEY": ""})
+    @patch.dict(os.environ, {"GEMINI_API_KEY": ""})
     def test_configuration_and_input_errors(self):
         self.assertEqual(self.ask().status_code, 503)
         for question in [" ", "x" * 1001]:
             self.assertEqual(self.ask(question=question).status_code, 422)
         self.assertEqual(self.ask(article_id=-1).status_code, 422)
-
-    @patch.dict(os.environ, {"OPENAI_API_KEY": "private-test-key"})
-    @patch("chatbot.urlopen")
-    def test_provider_contract_and_errors(self, urlopen):
-        id = self.post()
-        response = MagicMock()
-        response.read.return_value = json.dumps({"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": json.dumps({"answer": "Monday", "source_ids": [id], "insufficient_context": False})}]}]}).encode()
-        urlopen.return_value.__enter__.return_value = response
-        self.assertEqual(self.ask().json()["answer"], "Monday")
-        request = urlopen.call_args.args[0]
-        payload = json.loads(request.data)
-        self.assertFalse(payload["store"])
-        self.assertEqual(payload["text"]["format"]["type"], "json_schema")
-        self.assertEqual(payload["max_output_tokens"], 900)
-        self.assertNotIn("tools", payload)
-        for failure in [URLError("private-test-key"), TimeoutError("secret")]:
-            urlopen.side_effect = failure
-            result = self.ask()
-            self.assertEqual(result.status_code, 503)
-            self.assertNotIn("private-test-key", result.text)
-        urlopen.side_effect = None
-        response.read.return_value = b'{"status":"incomplete"}'
-        self.assertEqual(self.ask().status_code, 503)
-
 
 if __name__ == "__main__":
     unittest.main()

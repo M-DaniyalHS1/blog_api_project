@@ -4,38 +4,30 @@ Implemented on 2026-09-20; awaiting live verification. Task 7 is paused.
 
 ## Backend setup
 
-### Gemini option (added 2026-09-25)
+### Gemini through OpenAI Agents SDK
 
 To use Gemini, set these backend-only environment variables and manually redeploy:
 
 ```dotenv
-CHAT_PROVIDER=gemini
 GEMINI_API_KEY=your_private_gemini_api_key
 GEMINI_MODEL=gemini-3.8-flash
 ```
 
 Create the key in Google AI Studio. Never paste it into frontend code or chat. Gemini requests use Google's documented [OpenAI-compatible Chat Completions endpoint](https://ai.google.dev/gemini-api/docs/openai), with structured JSON answers. This path does not use the OpenAI Responses endpoint or the OpenAI key. There is no automatic provider fallback. Existing retrieval, citation checks, draft exclusion, and shared request limits apply. Gemini has its own provider quotas and billing rules; switching does not guarantee unlimited usage. Gemini output is capped at 4,096 tokens to allow room for model thinking; answers are still validated to the existing 6,000-character limit.
 
-The default remains `CHAT_PROVIDER=openai` for existing deployments. To switch back, set that value and configure `OPENAI_API_KEY`. The OpenAI-specific settings below apply only to that provider. For Gemini, public excerpts and questions are sent to Google, and OpenAI's `store: false` setting does not apply.
+Gemini is now the only provider. `CHAT_PROVIDER`, `OPENAI_API_KEY`, and `OPENAI_MODEL` are no longer used by the chatbot.
 
-Ten chatbot tests passed, including the Gemini request/response format, key isolation, and incomplete-answer handling. Provider responses were simulated; live Gemini verification is still required.
+Gemini now runs through the `openai-agents` package (`agents` Python module): `Agent` + `Runner` + `OpenAIChatCompletionsModel`, with an explicit `AsyncOpenAI` external client pointing to Google. `ModelAnswer` is the structured output type. Runs disable tracing, have no tools, allow one agent turn, and enforce a 35-second overall timeout. HTTP 502/503/504 get at most one retry; SDK client retries are disabled to avoid nested retries. The external client closes after each request. No OpenAI key is needed for Gemini.
 
-### OpenAI option
+Install dependencies with `uv sync` (the package and resolved dependencies are recorded in `pyproject.toml` and `uv.lock`). Redeploy the backend manually; this SDK migration requires no frontend or database changes. Provider responses in tests are simulated; live Gemini verification is still required. The SDK does not eliminate provider overload or quota errors.
 
-Add these settings to your existing backend `.env` for local development, and to the backend deployment's environment/secrets for production:
+SDK migration verification: all 36 backend tests passed. The Gemini integration test executes the real Agent/Runner/model adapter with a simulated client completion and checks structured output, citations, endpoint/key selection, disabled tracing, and the one-turn limit. A separate test checks bounded retries and redacted errors. No live provider call was made.
 
-```dotenv
-OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-4.1-mini
-CHAT_DAILY_LIMIT=100
-CHAT_HOURLY_LIMIT=10
-```
+### Request limits
 
-Replace the placeholder privately. Never add the key to frontend files or any `VITE_` variable. The real `.env` is ignored by Git. An OpenAI API account with API billing/access is required. Local key presence was checked without displaying secrets: not configured.
+Optional backend settings: `CHAT_DAILY_LIMIT=100` and `CHAT_HOURLY_LIMIT=10`.
 
-Deploy the backend and frontend manually as usual. No new Python dependencies are needed. Migration `migrations/009_chat_usage.sql` was applied to the configured database and the table was verified. Normal startup also creates the new table if it is absent in another environment.
-
-The implementation uses the OpenAI Responses API with structured output and `store: false`. References: [structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+Cleanup verification: all 33 remaining backend tests passed. Legacy direct-HTTP tests were removed along with their implementation; SDK integration, error handling, draft privacy, source checks, and request-limit tests remain. No live Gemini request was made.
 
 ## What readers get
 
@@ -45,11 +37,11 @@ The implementation uses the OpenAI Responses API with structured output and `sto
 - Answers include links to the selected source posts. Unknown citation IDs, absent sources, and insufficient evidence return a clear fallback.
 - Drafts are excluded before provider calls. Source publication status is checked again before returning answers.
 - The immediately previous user question supplies follow-up context; chat resets when changing article context. Conversations are kept only in page memory, with up to 20 displayed messages. No chat text is saved in our database.
-- Questions and selected public excerpts go to OpenAI. The UI discloses this and asks readers to check sources.
+- Questions and selected public excerpts go to Google Gemini. The UI discloses this and asks readers to check sources.
 
 ## Bounds and limitations
 
-- Each question: 1,000 characters; previous question: 1,000 characters. Up to five posts, bounded excerpts, and 900 output tokens per provider request.
+- Each question: 1,000 characters; previous question: 1,000 characters. Up to five posts, bounded excerpts, and 4,096 output tokens per provider request.
 - Database counters enforce 100 requests per UTC day across the site and 10 per client IP per clock hour by default. They survive restarts and are shared across workers. Set either limit to 0 to disable requests. Failed/no-match requests also count; these are request caps, not exact currency budgets.
 - Client addresses are HMAC-hashed before storage. Application code does not trust arbitrary forwarded headers; the hosting server must configure trusted proxy forwarding correctly. Shared IPs share the hourly cap; verify this behavior on your host. The global cap still applies across all clients.
 - Provider failures/timeouts return a generic 503, limits return 429 with Retry-After, and missing configuration does not stop the blog. Provider errors and API keys are not returned to readers.
