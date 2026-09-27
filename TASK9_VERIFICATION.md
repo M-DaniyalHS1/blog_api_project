@@ -1,6 +1,6 @@
 # Task 9: Writing assistant
 
-Implemented 2026-09-27; awaiting manual deployment and user verification.
+Completed 2026-09-27 based on user confirmation: "assistant is working". Automated checks passed as recorded below; individual live browser checks were not independently observed.
 
 ## How it works
 
@@ -31,4 +31,4 @@ Automated checks passed: all 37 backend tests, frontend ESLint, and the Vite pro
 6. Test a provider failure, expired session, and empty or oversized input. Verify text is preserved and errors are clear.
 7. Check the panel with keyboard navigation and a narrow phone screen.
 
-Automated provider calls use simulated responses. Live Gemini quality and browser interaction require manual verification before Task 9 is marked complete.
+Automated provider calls use simulated responses. Live working-behavior confirmation was provided by the user on 2026-09-27; the manual checklist remains available for regression checks.

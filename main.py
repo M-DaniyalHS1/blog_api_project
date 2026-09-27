@@ -14,6 +14,7 @@ from sqlalchemy import select, update, or_
 from sqlalchemy.exc import IntegrityError, OperationalError
 import asyncio
 import logging
+import os
 from sqlalchemy.orm import joinedload
 
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -48,7 +49,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[origin.strip().rstrip("/") for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

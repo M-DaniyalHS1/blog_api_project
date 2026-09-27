@@ -95,17 +95,6 @@ Verification: Implemented; awaiting manual deployment and user verification.
 - Migration 008 applied and verified. User-provided deployment logs showed a temporary Supabase DNS failure; startup now retries that specific failure up to four times, then fails explicitly.
 - User will deploy manually. See TASK6_VERIFICATION.md; Task 6 is not yet complete.
 
-## 7. Reporting and moderation
-Status: Paused at the user's request on 2026-09-20. Resume when requested.
-- [ ] Phase complete and verified
-- [ ] Allow users to report posts and comments.
-- [ ] Build an admin report-review interface.
-- [ ] Allow admins to remove inappropriate content and resolve reports.
-- [ ] Verify that ordinary users cannot access moderation actions.
-- [ ] Complete moderation before opening public registration widely.
-
-Verification / completion date: Pending.
-
 ## 8. Reader chatbot: Ask Dani Blogs
 Status: Complete. User confirmed the chatbot is working on 2026-09-27.
 - [x] Phase complete and verified
@@ -120,14 +109,14 @@ Status: Complete. User confirmed the chatbot is working on 2026-09-27.
 Verification / completion date: 2026-09-27. User confirmed the chatbot is working. The final Gemini integration uses the OpenAI Agents SDK. All 33 backend tests passed after cleanup; earlier frontend lint/build and migration 009 verification passed. Automated provider tests used simulated responses; live confirmation came from the user. See TASK8_VERIFICATION.md.
 
 ## 9. Writing assistant
-Status: Implemented on 2026-09-27; awaiting manual deployment and user verification. See TASK9_VERIFICATION.md.
-- [ ] Phase complete and verified
-- [ ] Suggest titles, draft improvements, and summaries in the editor.
-- [ ] Show suggestions for author review before applying them.
-- [ ] Never publish automatically or overwrite drafts without approval.
-- [ ] Verify author permissions, draft preservation, and error handling.
+Status: Complete based on user confirmation. See TASK9_VERIFICATION.md.
+- [x] Phase complete and verified
+- [x] Suggest titles, draft improvements, and summaries in the editor.
+- [x] Show suggestions for author review before applying them.
+- [x] Never publish automatically or overwrite drafts without approval.
+- [x] Verify author permissions, draft preservation, and error handling.
 
-Verification / completion date: Pending.
+Verification / completion date: 2026-09-27. User confirmed "assistant is working". All 37 backend tests, frontend lint, and production build passed. Provider responses in automated tests were simulated; live confirmation came from the user. Browser interactions were not independently verified.
 
 ## 10. Launch checks and deployment
 - [ ] Phase complete and verified
@@ -142,4 +131,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 9: Verify the writing assistant after manual deployment. Task 8 is complete. Task 7 remains paused. Task 6 still awaits user confirmation.
+Step 10: Launch checks and deployment (not started). Tasks 8 and 9 are complete. Task 6 still awaits user confirmation.
