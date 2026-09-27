@@ -107,19 +107,20 @@ Status: Paused at the user's request on 2026-09-20. Resume when requested.
 Verification / completion date: Pending.
 
 ## 8. Reader chatbot: Ask Dani Blogs
-Status: Implemented locally; awaiting API-key configuration, manual deployment, and live verification.
-- [ ] Phase complete and verified
-- [ ] Add a closable chat panel with starter questions.
-- [ ] Find posts, summarize articles, and answer questions from published content.
-- [ ] Link answers to the source articles used.
-- [ ] Explain when published content does not contain enough information.
-- [ ] Exclude private drafts and treat article text as content, not instructions.
-- [ ] Keep AI credentials on the FastAPI backend and add usage limits.
-- [ ] Verify citations, unavailable answers, and service errors.
+Status: Complete. User confirmed the chatbot is working on 2026-09-27.
+- [x] Phase complete and verified
+- [x] Add a closable chat panel with starter questions.
+- [x] Find posts, summarize articles, and answer questions from published content.
+- [x] Link answers to the source articles used.
+- [x] Explain when published content does not contain enough information.
+- [x] Exclude private drafts and treat article text as content, not instructions.
+- [x] Keep AI credentials on the FastAPI backend and add usage limits.
+- [x] Verify citations, unavailable answers, and service errors.
 
-Verification: 31 backend tests passed, including 7 chatbot tests; frontend lint and production build passed. Migration 009 applied and verified. Provider responses were mocked; real AI answers and browser behavior await manual verification. See TASK8_VERIFICATION.md for setup and checks. Keep this phase unchecked until the user confirms it works.
+Verification / completion date: 2026-09-27. User confirmed the chatbot is working. The final Gemini integration uses the OpenAI Agents SDK. All 33 backend tests passed after cleanup; earlier frontend lint/build and migration 009 verification passed. Automated provider tests used simulated responses; live confirmation came from the user. See TASK8_VERIFICATION.md.
 
 ## 9. Writing assistant
+Status: Implemented on 2026-09-27; awaiting manual deployment and user verification. See TASK9_VERIFICATION.md.
 - [ ] Phase complete and verified
 - [ ] Suggest titles, draft improvements, and summaries in the editor.
 - [ ] Show suggestions for author review before applying them.
@@ -141,4 +142,4 @@ Verification / completion date: Pending.
 
 ## Current next task
 
-Step 8: Configure and verify Ask Dani Blogs after manual deployment. Task 7 is paused. Task 6 still awaits user confirmation.
+Step 9: Verify the writing assistant after manual deployment. Task 8 is complete. Task 7 remains paused. Task 6 still awaits user confirmation.

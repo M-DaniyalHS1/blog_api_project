@@ -103,18 +103,18 @@ def retrieve(db, question):
     return sources
 
 
-async def run_gemini_agent(instructions, input_text, key):
+async def run_gemini_agent(instructions, input_text, key, output_type=ModelAnswer, name="Ask Dani Blogs"):
     # Explicit client prevents the SDK from using an OpenAI key or endpoint.
     async with AsyncOpenAI(api_key=key,
                            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                            timeout=15, max_retries=0) as external_client:
         agent = Agent(
-            name="Ask Dani Blogs",
+            name=name,
             instructions=instructions,
             model=OpenAIChatCompletionsModel(
                 model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
                 openai_client=external_client),
-            output_type=ModelAnswer,
+            output_type=output_type,
             model_settings=ModelSettings(max_tokens=4096),
         )
         # Bound the whole run, including retry delays, below the UI timeout.
@@ -123,7 +123,7 @@ async def run_gemini_agent(instructions, input_text, key):
                 try:
                     result = await Runner.run(agent, input=input_text, max_turns=1,
                                               run_config=RunConfig(tracing_disabled=True))
-                    return ModelAnswer.model_validate(result.final_output)
+                    return output_type.model_validate(result.final_output)
                 except APIStatusError as error:
                     if error.status_code not in (502, 503, 504) or attempt == 1:
                         raise

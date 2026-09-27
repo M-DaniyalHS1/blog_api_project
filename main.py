@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException,Query, Request
 from chatbot import ChatQuestion, answer_question
+from writing_assistant import WritingRequest, suggest_writing
 from auth import SECRET_KEY
 from database import engine, sessionlocal
 from sqlalchemy.orm import Session
@@ -66,6 +67,11 @@ def current_user(payload: dict = Depends(verify_token), db: Session = Depends(ge
     if not user or user.token_version != payload["ver"]:
         raise HTTPException(401, "Invalid or expired session", headers={"WWW-Authenticate": "Bearer"})
     return user
+
+
+@app.post("/writing-assistant")
+def writing_assistant(body: WritingRequest, user: model.User = Depends(current_user), db: Session = Depends(get_db)):
+    return suggest_writing(db, user, body, SECRET_KEY)
 
 
 @app.post("/chat")

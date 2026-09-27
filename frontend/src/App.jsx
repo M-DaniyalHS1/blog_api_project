@@ -1,4 +1,5 @@
 import MyPosts from "./MyPosts.jsx";
+import WritingAssistant from "./WritingAssistant.jsx";
 import Chatbot from "./Chatbot.jsx";
 import { AuthorPage, ProfileEditor } from "./Profile.jsx";
 import ArticlePage from "./ArticlePage.jsx";
@@ -700,6 +701,12 @@ function HomeApp({ token, setToken, currentUser, setCurrentUser }) {
                 onChange={(event) => setContent(event.target.value)}
                 rows="10"
               />
+
+              <WritingAssistant key={editingId || "new"} apiBase={API_BASE_URL} token={token} postId={editingId} title={title} summary={summary} content={content} disabled={submitting || loggingIn} onApply={(field, value) => {
+                if (field === "title") setTitle(value);
+                else if (field === "summary") setSummary(value);
+                else if (field === "content") setContent(value);
+              }} />
 
               {createError && (
                 <p className="create-error" role="alert">

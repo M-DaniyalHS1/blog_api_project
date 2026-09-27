@@ -1,0 +1,12 @@
+.writing-assistant { margin: 20px 0; padding: 18px; border: 1px solid #455274; border-radius: 12px; background: #141d30; }
+.writing-assistant h3, .writing-assistant h4 { color: #f0efff; margin-bottom: 10px; }
+.writing-assistant p { color: #bec7dc; font-size: 13px; line-height: 1.6; margin: 8px 0; }
+.writing-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.writing-assistant button { color: #eeeaff; background: #34285d; border: 1px solid #6f5aa5; padding: 10px 12px; border-radius: 8px; cursor: pointer; }
+.writing-assistant button:disabled { opacity: .5; cursor: not-allowed; }
+.writing-assistant button:focus-visible { outline: 2px solid #73ead2; outline-offset: 3px; }
+.writing-preview { margin-top: 14px; border-top: 1px solid #455274; padding-top: 14px; }
+.writing-choice { margin-bottom: 12px; }
+.writing-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 300px; overflow-y: auto; background: #0c1423; padding: 12px; border-radius: 8px; margin: 12px 0; color: #e6eaf5; line-height: 1.7; }
+.writing-assistant .writing-error { color: #ffb8be; }
+.writing-dismiss { margin: 8px 0 0 8px; }

@@ -1,6 +1,6 @@
 # Task 8: Ask Dani Blogs
 
-Implemented on 2026-09-20; awaiting live verification. Task 7 is paused.
+Completed on 2026-09-27 based on user confirmation that the chatbot is working. Task 7 remains paused. Notes below record development history; individual browser checks were not independently observed.
 
 ## Backend setup
 
