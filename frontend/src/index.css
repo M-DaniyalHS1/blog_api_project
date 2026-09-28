@@ -1495,3 +1495,23 @@ footer p {
     scroll-behavior: auto !important;
   }
 }
+
+/* Hero vertical spacing kam */
+@media (min-width: 1051px) {
+  .hero {
+    padding-top: 10px;
+    padding-bottom: 36px;
+    min-height: 0;
+  }
+
+  .hero-collage {
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .hero {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
